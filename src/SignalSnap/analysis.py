@@ -1,6 +1,5 @@
 # This file is part of QuantumPolyspectra: a Python Package for the
 # Analysis and Simulation of Quantum Measurements
-# hallo
 #
 #    Copyright (c) 2020 and later, Markus Sifft and Daniel Hägele.
 #    All rights reserved.
