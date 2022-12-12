@@ -1,12 +1,22 @@
-# QuantumPolyspectra: a Python Package for the Analysis and Simulation of Quantum Measurements 
+# SignalSnap: Signal Analysis Made Easy 
 by M. Sifft and D. Hägele
 
-The QuantumPolyspectra package is open-source software for analyzing and simulating quantum measurements in terms of so-called quantum polyspectra. Here we refer to the polyspectra as second to fourth order spectra (powerspectrum, bispectrum, and 2D cut through trispectrum). The simulation of measurement traces (integration of the stochastic master equation) is implemented via the QuTiP toolbox whereas the calculation of polyspectra from Hamiltonians or measurements traces recorded in the lab is performed as described in [this paper](https://link.aps.org/doi/10.1103/PhysRevB.98.205143) and [this paper](https://arxiv.org/abs/2011.07992) which also shows the utilization of quantum polyspectra to extract Hamiltonian parameters from a quantum measurement. 
+The SignalSnap package is open-source software for analyzing signals in the spectral domain. Here, a few outstanding 
+features of SignalSnap:
+* Calculation of a powerspectrum within a few lines of code
+* Errors of spectral values are automatically calculated 
+* Calculation of higher-order spectra or polyspectra (3rd and 4th order) (+ error estimation) in a few lines of code
+* Support for just-in-time import hdf data (dataset does not have to fit in RAM)
+* All calculation can be performed on GPU (see Arrayfire) 
+* Advanced plotting options for two-dimensional higher-order spectra 
+* Usage of unbiased estimators for higher-order cumulants (see Literature)
+* Efficient implementation of the confined Gaussian window for an optimal time-bandwidth product (see Literature)
+* Special functions for the verification of the stationarity of a signal
 
 ## Documentation
-The package is divided into two parts: the **generation** module and the **analysis** module. 
+A comprehensive documentation of SignalSnap will follow soon. 
 ### Generation Module
-This module connects any measurement trace as defined by a time-independet stochastic master equation with its corresponding polyspectra. Notice that spectra can be inferred via an actual simulation of the measurement trace by integration of the SME or (much quicker) by directly evaluating the ???formulas as shown [here](https://link.aps.org/doi/10.1103/PhysRevB.98.205143). 
+This module connects any measurement trace as defined by a time-independent stochastic master equation with its corresponding polyspectra. Notice that spectra can be inferred via an actual simulation of the measurement trace by integration of the SME or (much quicker) by directly evaluating the ???formulas as shown [here](https://link.aps.org/doi/10.1103/PhysRevB.98.205143). 
 ### Analysis Module
 This module allows for a convenient calculation of polyspectra from any measurement performed in the laboratory using state-of-the-art cumulant estimators and window function. Error estimation is done automatically. All routines are implemented using the ArrayFire library which allows the code to run on any CPU and GPU (Nvidia and AMD). GPUs are highly recommended for measurement trace exceeding 3 GB (binary size, not as .csv). The module also comes with a helper function for the conversion between .csv files to .h5 files which are needed to run the routines. Moreover, it come pre-equiped with a function for the estimation of parameters of telegraph noise.
 
@@ -14,20 +24,20 @@ This module allows for a convenient calculation of polyspectra from any measurem
 Examples for every function of the package are currently added to the folder Examples
 
 ## Support
-The development of the QuantumPolyspectra package is supported by the working group Spectroscopy of Condensed Matter of the Faculty of Physics and Astronomy at the Ruhr University Bochum.
+The development of the SignalSnap package is supported by the working group Spectroscopy of Condensed Matter of the 
+Faculty of Physics and Astronomy at the Ruhr University Bochum.
 
 ## Dependencies
 For the package multiple libraries are used for the numerics and displaying the results:
 * NumPy
 * SciPy
-* Pandas
-* Cachetools
-* QuTiP
 * MatPlotLib
-* Plotly
 * tqdm
 * Numba
-* Lmfit
 * h5py
 * ArrayFire
-* labellines
+
+## Literature
+Unbiased estimators are used for the calculation of higher-order cumulants. Their derivation can be found in
+[this paper](https://arxiv.org/abs/2011.07992). An explanation for how the spectra are calculated can be found in
+Appendix B of [this paper](https://doi.org/10.1103/PhysRevResearch.3.033123).
