@@ -1,13 +1,17 @@
 # SignalSnap: Signal Analysis In Python Made Easy 
 by M. Sifft and D. Hägele
 
-The SignalSnap Python package is open-source software for analyzing signals in the spectral domain. Here, a few outstanding 
-features of SignalSnap:
-* Calculation of a powerspectrum within a few lines of code
-* Errors of spectral values are automatically calculated 
-* Calculation of higher-order spectra or polyspectra (3rd and 4th order) (+ error estimation) in a few lines of code
-* Support for just-in-time import from hdf data (dataset does not have to fit in RAM)
-* Function for conversion of Numpy array to hdf data is also provided
+We present a fast Python toolbox for the higher-order spectral analysis of time series. The usual second-order 
+power spectrum and its higher-order generalization - so-called bi- and trispectra - are efficiently calculated 
+on any platform. The toolbox supports GPU acceleration using the ArrayFire library. The treatment of large datasets 
+is not limited by available RAM. We were able to process 11.6 GB of data (given in the hdf5 format) within just one 
+minute to obtain a power spectrum with a one-million-point resolution using a five-year-old Nvidia GeForce GTX 1080. 
+Similarly, 1000x1000 points of a trispectrum were obtained from processing 3.3 GB of data per minute.
+
+Here, a few outstanding features of SignalSnap:
+* Errors of spectral values are automatically calculated ([beginners example](Examples/Calculating%20Spectra%20from%20Numpy%20Array.ipynb))
+* Support for just-in-time import from hdf data (dataset does not have to fit in RAM) ([example](Examples/Calculating%20Polyspectra%20from%20Measurement.ipynb))
+* Function for conversion of Numpy array to hdf data is also provided ([example](Examples/Conversion%20of%20CSV%20to%20h5.ipynb))
 * Correlations between two time series can be calculated
 * All calculation can be performed on GPU (NVidia and AMD) (see Arrayfire) 
 * Advanced plotting options for two-dimensional higher-order spectra 
@@ -34,10 +38,10 @@ import numpy as np
 rng = np.random.default_rng()
 
 # ------ Generation of white noise -----
-unit = 'Hz'
-fs = 10e3 # sampling rate
+f_unit = 'kHz'
+fs = 10e3 # sampling rate in kHz
 N = 1e5 # number of points
-t = np.arange(N) / fs
+t = np.arange(N) / fs # unit is automatically chosen to be 1/f_unit = ms
 y = rng.normal(scale=1, size=t.shape)
 ```
 
@@ -46,9 +50,9 @@ later the spectra and errors, all freely chosen variables and contains
 the methods for calculating the spectra, plotting and storing.
 
 ```python
-spec = snp.Spectrum(data=y, delta_t=1/fs)
-T_window = 0.02 # these are now ms since the unit of choice are kHz
-f_max = 5e3 # kHz
+spec = snp.Spectrum(data=y, delta_t=1/fs, f_unit=f_unit)
+T_window = 0.02 # in ms
+f_max = 5e3 # in kHz
 f, s, serr = spec.calc_spec(order_in=[2], T_window=T_window, f_max=f_max, backend='cpu')
 ```
 
