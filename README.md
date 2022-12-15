@@ -49,8 +49,17 @@ the methods for calculating the spectra, plotting and storing.
 spec = snp.Spectrum(data=y, delta_t=1/fs)
 T_window = 0.02 # these are now ms since the unit of choice are kHz
 f_max = 5e3 # kHz
-f, s, serr = spec.calc_spec(order_in=[2,3,4], T_window=T_window, f_max=f_max, backend='cpu')
+f, s, serr = spec.calc_spec(order_in=[2], T_window=T_window, f_max=f_max, backend='cpu')
 ```
+
+```
+Actual T_window: 0.02
+Maximum frequency: 5000.0
+Number of points: 101
+
+
+```
+
 The output will show you the actual length of a window (in case your T_window is not a multiple of 1/fs), the maximum 
 frequency (Nyquist frequency) and the number of point of the calculated spectrum. The data points in the first window 
 are plotted, so you can verify the window length (which is also given in points by chunk shape). The function will 
@@ -60,7 +69,33 @@ of the spectra value (1 sigma).
 Visualization of the results is just as easy as the calculation.
 
 ```python
-fig = spec.plot(order_in=[2,3,4], f_max=f_max/2)
+fig = spec.plot(order_in=[2], f_max=f_max/2)
+```
+
+Besides the power spectrum (blue line) the error bands (1 to 5 sigma) are shown as grey lines in the plot.
+Now, we can even verify that we are dealing with true Gaussian noise by calculating the higher-order spectra of the time
+series.
+
+## Why higher-order spectra?
+Higher-order spectra contain additional information that is not contained within a power spectrum. The toolbox is 
+capable of calculating the third- and four-order spectrum (also called bi- and trispectrum, respectively). These have 
+the following properties:
+* Spectra beyond second order are not sensitive to Gaussian noise.
+* Bispectrum: shows contributions whenever the phase of two frequencies and their sum are phase correlated (e.g. by 
+mixing two signals)
+* Trispectrum: can be interpreted as intensity correlation between two frequencies
+
+Let's calculate all spectra up to fourth order of the dataset above and verify that the signal does not deviate 
+significantly from Gaussian noise using the first property (has no significant higher-order contributions). We 
+only have to change the `order_in` argument:
+
+```python
+f, s, serr = spec.calc_spec(order_in=[2, 3, 4], T_window=T_window, f_max=f_max, backend='cpu')
+```
+
+Plotting can also be done as before by changing the `order_in` argument:
+```python
+fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2)
 ```
 
 

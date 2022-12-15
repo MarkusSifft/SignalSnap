@@ -544,7 +544,23 @@ def add_random_phase(a_w, window_size, delta_t, m):
     return a_w_phased
 
 
-def plot_first_frame(chunk, delta_t, window_size):
+def unit_conversion(f_unit):
+    if f_unit == 'Hz':
+        t_unit = 's'
+    elif f_unit == 'kHz':
+        t_unit = 'ms'
+    elif f_unit == 'MHz':
+        t_unit = 'us'
+    elif f_unit == 'GHz':
+        t_unit = 'ns'
+    elif f_unit == 'THz':
+        t_unit = 'ps'
+    elif f_unit == 'mHz':
+        t_unit = 's $\cdot 10$'
+    return t_unit
+
+
+def plot_first_frame(chunk, delta_t, window_size, t_unit=None):
     """
     Helper function for plotting one window during the calculation of the spectra for checking data and correct
     window length
@@ -562,7 +578,19 @@ def plot_first_frame(chunk, delta_t, window_size):
     first_frame = chunk[:window_size]
     t = np.arange(0, len(first_frame) * delta_t, delta_t)
     plt.figure(figsize=(14, 3))
+
+    plt.rc('text', usetex=False)
+    plt.rc('font', size=12)
+    plt.rcParams["axes.axisbelow"] = False
+
+    plt.title('data in first window')
+
     plt.plot(t, first_frame)
+
+    plt.xlim([0, t[-1]])
+    plt.xlabel('t / (' + t_unit + ')')
+    plt.ylabel('amplitude')
+
     plt.show()
 
 
@@ -659,7 +687,7 @@ class Spectrum:
     """
 
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None, corr_data=None,
-                 corr_path=None, corr_group_key=None, corr_dataset=None):
+                 corr_path=None, corr_group_key=None, corr_dataset=None, f_unit='Hz'):
         self.corr_data_path = None
         self.T_window = None
         self.path = path
@@ -690,6 +718,8 @@ class Spectrum:
         self.main_data = None
         self.err_counter = {2: 0, 3: 0, 4: 0}
         self.stationarity_counter = {2: 0, 3: 0, 4: 0}
+        self.f_unit = f_unit
+        self.t_unit = unit_conversion(f_unit)
 
     def save_spec(self, path):
         """
@@ -710,7 +740,7 @@ class Spectrum:
         self.S_stationarity_temp = None
         pickle_save(path, self)
 
-    def stationarity_plot(self, f_unit='Hz', t_unit='s', contours=False, s2_filter=0, arcsinh_plot=False,
+    def stationarity_plot(self, f_unit=None, t_unit=None, contours=False, s2_filter=0, arcsinh_plot=False,
                           arcsinh_const=1e-4, f_max=None,
                           normalize=False):
         """
@@ -732,6 +762,13 @@ class Spectrum:
         -------
 
         """
+
+        if f_unit is None:
+            f_unit = self.f_unit
+
+        if t_unit is None:
+            t_unit = self.t_unit
+
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(24, 7))
         plt.rc('text', usetex=False)
         plt.rc('font', size=10)
@@ -844,7 +881,11 @@ class Spectrum:
 
             self.err_counter[order] = 0
 
-    def calc_overlap(self, unit, imag=False, scale_t=1):
+    def calc_overlap(self, t_unit=None, imag=False, scale_t=1):
+
+        if t_unit is None:
+            t_unit = self.t_unit
+
         plt.figure(figsize=(28, 13))
 
         overlap_s2 = [np.var(self.S_stationarity[2][:, i] * self.S[2]) for i in range(self.S_stationarity[2].shape[1])]
@@ -869,7 +910,7 @@ class Spectrum:
 
         plt.plot(t_main, self.main_data / max(self.main_data))
         plt.legend()
-        plt.xlabel(unit)
+        plt.xlabel(t_unit)
         plt.ylabel('normalized')
         if not imag:
             plt.title('real part')
@@ -1041,7 +1082,7 @@ class Spectrum:
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
 
             if not self.first_frame_plotted:
-                plot_first_frame(chunk, self.delta_t, window_points)
+                plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
 
             chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
@@ -1349,11 +1390,14 @@ class Spectrum:
 
         return s_data, s_err
 
-    def plot(self, order_in=(2, 3, 4), f_max=None, f_min=None, unit='Hz', sigma=1, green_alpha=0.3, arcsinh_plot=False,
+    def plot(self, order_in=(2, 3, 4), f_max=None, f_min=None, f_unit=None, sigma=1, green_alpha=0.3, arcsinh_plot=False,
              arcsinh_const=0.02,
              contours=False, s3_filter=0, s4_filter=0, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
              s4_data=None, s4_err=None, s2_f=None, s3_f=None, s4_f=None, imag_plot=False, plot_error=True,
              broken_lims=None):
+
+        if f_unit is None:
+            f_unit = self.f_unit
 
         fig_x = 8 * len(order_in)
         width_ratios = []
@@ -1428,9 +1472,9 @@ class Spectrum:
                 ax[0].plot(s_f_plot[order], s_data_plot[order], color=[0, 0.5, 0.9], linewidth=3)
 
                 ax[0].tick_params(axis='both', direction='in')
-                ax[0].set_ylabel(r"$S^{(2)}_z$ (" + unit + r"$^{-1}$)", labelpad=13, fontdict={'fontsize': 14})
-                ax[0].set_xlabel(r"$\omega / 2\pi$ (" + unit + r")", labelpad=13, fontdict={'fontsize': 14})
-                ax[0].set_title(r"$S^{(2)}_z$ (" + unit + r"$^{-1}$)", fontdict={'fontsize': 16})
+                ax[0].set_ylabel(r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)", labelpad=13, fontdict={'fontsize': 14})
+                ax[0].set_xlabel(r"$\omega / 2\pi$ (" + f_unit + r")", labelpad=13, fontdict={'fontsize': 14})
+                ax[0].set_title(r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
 
                 if broken_lims is not None:
                     ylims = ax[0].get_ylim()
@@ -1516,17 +1560,17 @@ class Spectrum:
                         f_min = s_f_plot[order].min()
                     ax[axis].axis([f_min, f_max, f_min, f_max])
 
-                    ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + unit + r")", fontdict={'fontsize': 14})
-                    ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + unit + r")", fontdict={'fontsize': 14})
+                    ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + f_unit + r")", fontdict={'fontsize': 14})
+                    ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + f_unit + r")", fontdict={'fontsize': 14})
                     ax[axis].tick_params(axis='both', direction='in')
 
                     if green_alpha == 0:
                         ax[axis].set_title(
-                            r'$S^{(' + f'{order}' + r')}_z $ (' + unit + r'$^{-' + f'{order - 1}' + r'}$)',
+                            r'$S^{(' + f'{order}' + r')}_z $ (' + f_unit + r'$^{-' + f'{order - 1}' + r'}$)',
                             fontdict={'fontsize': 16})
                     else:
                         ax[axis].set_title(
-                            r'$S^{(' + f'{order}' + r')}_z $ (' + unit + r'$^{-' + f'{order - 1}' + r'}$) (%i$\sigma$ confidence)' % (
+                            r'$S^{(' + f'{order}' + r')}_z $ (' + f_unit + r'$^{-' + f'{order - 1}' + r'}$) (%i$\sigma$ confidence)' % (
                                 sigma),
                             fontdict={'fontsize': 16})
                     fig.colorbar(c, ax=(ax[axis]))
