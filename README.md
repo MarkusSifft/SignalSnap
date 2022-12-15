@@ -56,9 +56,8 @@ f, s, serr = spec.calc_spec(order_in=[2], T_window=T_window, f_max=f_max, backen
 Actual T_window: 0.02
 Maximum frequency: 5000.0
 Number of points: 101
-
-
 ```
+!(/Examples/plots/example_window.png)
 
 The output will show you the actual length of a window (in case your T_window is not a multiple of 1/fs), the maximum 
 frequency (Nyquist frequency) and the number of point of the calculated spectrum. The data points in the first window 
