@@ -57,7 +57,7 @@ Actual T_window: 0.02
 Maximum frequency: 5000.0
 Number of points: 101
 ```
-!(/Examples/plots/example_window.png)
+![data in first window](Examples/plots/example_window.png)
 
 The output will show you the actual length of a window (in case your T_window is not a multiple of 1/fs), the maximum 
 frequency (Nyquist frequency) and the number of point of the calculated spectrum. The data points in the first window 
@@ -70,6 +70,7 @@ Visualization of the results is just as easy as the calculation.
 ```python
 fig = spec.plot(order_in=[2], f_max=f_max/2)
 ```
+![power spectrum of the data](Examples/plots/example_s2.png)
 
 Besides the power spectrum (blue line) the error bands (1 to 5 sigma) are shown as grey lines in the plot.
 Now, we can even verify that we are dealing with true Gaussian noise by calculating the higher-order spectra of the time
@@ -94,9 +95,22 @@ f, s, serr = spec.calc_spec(order_in=[2, 3, 4], T_window=T_window, f_max=f_max, 
 
 Plotting can also be done as before by changing the `order_in` argument:
 ```python
-fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2)
+fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2, green_alpha=0)
 ```
+![polyspectra of the data](Examples/plots/example_poly_no_errors.png)
 
+Now, the third-and fourth-order spectra (S3 and S4) are visible. Just like the power spectrum they are noisy.
+To decide which of the fluctuations are significant we need a way of displaying errors in the two-dimensional
+plots. Here, errors are visualized be overlaying a green color on the spectral contributions which deviate from 
+zero less than a certain number of standard deviations. 
+
+```python
+fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2, sigma=3)
+```
+![polyspectra of the data](Examples/plots/example_poly.png)
+
+Clearly, all higher-order contributions are nothing but noise and we have, therefore, verifed that our 
+original dataset was Gaussian noise (and even white noise due to the flat power spectrum).
 
 ## Support
 The development of the SignalSnap package is supported by the working group Spectroscopy of Condensed Matter of the 
