@@ -749,14 +749,23 @@ class Spectrum:
         Parameters
         ----------
         f_unit : str
-            Frequencies nit
-        t_unit
-        contours
-        s2_filter
-        arcsinh_plot
-        arcsinh_const
-        f_max
-        normalize
+            frequency unit
+        t_unit : str
+            time unit
+        contours : bool
+            if set contours are drawn
+        s2_filter : float
+            value for sigma of a Gaussian filter in direction of time (usefull in the case of noisy data)
+        arcsinh_plot : bool
+            if set the spectral values are scale with an arcsinh function (similar to log but also works for negative
+            values). The amount of scaling is given by the arcsinh_const.
+        arcsinh_const : float
+            constant to set amount of arcsinh scaling. The lower, the stronger.
+        f_max : float
+            maximum frequency to plot on the fequency axis
+        normalize : ['area', 'zero']
+            for better visualization all spectra can be normalized to set the
+            area under the S2 to 1 or the value at S2(0) to 1.
 
         Returns
         -------
