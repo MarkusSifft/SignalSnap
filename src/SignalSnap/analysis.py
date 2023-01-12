@@ -1383,6 +1383,26 @@ class Spectrum:
         return self.freq, self.S, self.S_err
 
     def import_spec_data_for_plotting(self, s_data, s_err, order, imag_plot):
+
+        """
+        Helper function for importing spectral data during plotting.
+
+        Parameters
+        ----------
+        s_data : array or None
+            Used if data to be shown is provided as argument when calling "self.plot(...)".
+        s_err : array or None
+            Used if data to be shown is provided as argument when calling "self.plot(...)".
+        order : {2,3,4}
+            Order of spectral data to be loaded.
+        imag_plot : bool
+            Set if imaginary part of the spectral data should be plotted.
+
+        Returns
+        -------
+        Returns the spectral data and error as array.
+        """
+
         if imag_plot:
             s_data = np.imag(self.S[order]).copy() if s_data is None else np.imag(s_data).copy()
             if s_err is not None:
@@ -1404,6 +1424,79 @@ class Spectrum:
              contours=False, s3_filter=0, s4_filter=0, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
              s4_data=None, s4_err=None, s2_f=None, s3_f=None, s4_f=None, imag_plot=False, plot_error=True,
              broken_lims=None):
+
+        """
+        Plots the spectral data of any combination of spectral orders together with errors. Has many options to
+        customize the appearance and choose the plotted frequencies.
+
+        Parameters
+        ----------
+        order_in : list {2,3,4}
+            Spectral orders to be plotted. Multiple orders can be chosen.
+        f_max : float
+            Sets the upper limit of the frequency axis. If set higher than the Nyquist frequency, the
+            Nyquist frequency will be chosen as limit.
+        f_min : float
+            Sets the lower limit of the frequency axis.
+        f_unit : str or None
+            Frequency unit can be passed labeling the plot. If None, the unit which was set when creating the
+            Spectrum object is used.
+        sigma : float
+            Sets the number of standard deviations as error to be shown in the two-dimensional plots of order 3 and 4.
+            The spectral values are colored green if the number of standard deviations is higher than the specific
+            spectral value.
+        green_alpha : float
+            Sets the alpha value for the green error tiling. (Value between 0 and 1)
+        arcsinh_plot : bool
+            if set the spectral values are scale with an arcsinh function (similar to log but also works for negative
+            values). The amount of scaling is given by the arcsinh_const.
+        arcsinh_const : float
+            constant to set amount of arcsinh scaling. The lower, the stronger.
+        contours : bool
+            If set contours are shown in the 2D plots.
+        s3_filter : float
+            Applies a Gaussian filter the width s3_filter to the third-order data
+        s4_filter : float
+            Applies a Gaussian filter the width s4_filter to the fourth-order data
+        s2_data : array
+            Spectral data for the power spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s2_err : array
+            Spectral errors for the power spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s3_data : array
+            Spectral data for the third-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s3_err : array
+            Spectral errors for the third-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s4_data : array
+            Spectral data for the fourth-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s4_err : array
+            Spectral errors for the fourth-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s2_f : array
+            Frequency values for the power spectrum can be provided and is than used instead of the values
+            stored in the object.
+        s3_f : array
+            Frequency values for the third-order spectrum can be provided and is than used instead of the values
+            stored in the object.
+        s4_f : array
+            Frequency values for the fourth-order spectrum can be provided and is than used instead of the values
+            stored in the object.
+        imag_plot : bool
+            If set imaginary part of the spectral values are plotted.
+        plot_error : bool
+            If set 1 to 5 sigma error bands are shown in the power spectrum.
+        broken_lims : list of lists
+            The low and upper limit of each section of a broken frequency axis can be provided, given that
+            the frequency arrays (s2_f, s3_f, s4_f) contain disconnected sections.
+
+        Returns
+        -------
+        Return the matplotlib figure.
+        """
 
         if f_unit is None:
             f_unit = self.f_unit
@@ -1474,9 +1567,9 @@ class Spectrum:
                 if plot_error and (s_err_plot[order] is not None or self.S_err[2] is not None):
                     for i in range(0, 5):
                         ax[0].plot(s_f_plot[order], s2_err_p[i], color=[0.1 * i + 0.3, 0.1 * i + 0.3, 0.1 * i + 0.3],
-                                   linewidth=2, label=r"$%i\sigma$" % (i + 1))
+                                   linewidth=2, label=r"$%i\sigma$" % (i + 1), alpha=0.5)
                         ax[0].plot(s_f_plot[order], s2_err_m[i], color=[0.1 * i + 0.3, 0.1 * i + 0.3, 0.1 * i + 0.3],
-                                   linewidth=2, label=r"$%i\sigma$" % (i + 1))
+                                   linewidth=2, label=r"$%i\sigma$" % (i + 1), alpha=0.5)
 
                 ax[0].plot(s_f_plot[order], s_data_plot[order], color=[0, 0.5, 0.9], linewidth=3)
 
