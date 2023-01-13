@@ -1,5 +1,4 @@
-# This file is part of QuantumPolyspectra: a Python Package for the
-# Analysis and Simulation of Quantum Measurements
+# This file is part of SignalSnap: Signal Analysis In Python Made Easy
 #
 #    Copyright (c) 2020 and later, Markus Sifft and Daniel Hägele.
 #    All rights reserved.
@@ -15,9 +14,9 @@
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
 #
-#    3. Neither the name of the QuTiP: Quantum Toolbox in Python nor the names
-#       of its contributors may be used to endorse or promote products derived
-#       from this software without specific prior written permission.
+#    3. Neither the name SignalSnap: Signal Analysis In Python Made Easy nor the
+#       names of its contributors may be used to endorse or promote products
+#       derived from this software without specific prior written permission.
 #
 #    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 #    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -928,10 +927,39 @@ class Spectrum:
         plt.show()
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
-    def fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, delta_t, m, m_var, m_stationarity,
+    def fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
                                   single_window, window=None, chunk_corr_gpu=None,
                                   coherent=False, random_phase=False,
                                   window_points=None):
+        """
+        Helper function to calculate the (2,3,4)-order cumulant from the Fourier coefficients of the m windows in
+        one frame.
+
+        Parameters
+        ----------
+        orders : {2,3,4}
+            Orders of the spectra to be calculated.
+        a_w_all_gpu : array
+            A matrix containing the Fourier coefficients of m windows.
+        f_max_ind : int
+            Index of the maximum frequency in f_all_in array to calculate the spectral values at.
+        m : int
+            Spectra for m windows with temporal length T_window are calculated.
+        m_var: int
+            Number of spectra to calculate the variance from (should be set as high as possible).
+        m_stationarity: int
+            Number of spectra after which their mean is stored to varify stationarity of the data.
+        single_window
+        window
+        chunk_corr_gpu
+        coherent
+        random_phase
+        window_points
+
+        Returns
+        -------
+
+        """
 
         for order in orders:
             if order == 2:
@@ -941,16 +969,16 @@ class Spectrum:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
                     single_spectrum = c2(a_w, a_w_corr, m, coherent=coherent) / (
-                            delta_t * (single_window ** order).sum())
+                            self.delta_t * (single_window ** order).sum())
 
                 else:
-                    single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (delta_t * (single_window ** order).sum())
+                    single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (self.delta_t * (single_window ** order).sum())
 
             elif order == 3:
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
                 a_w2 = a_w1
                 a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, m))
-                single_spectrum = c3(a_w1, a_w2, a_w3, m) / (delta_t * (single_window ** order).sum())
+                single_spectrum = c3(a_w1, a_w2, a_w3, m) / (self.delta_t * (single_window ** order).sum())
 
             else:  # order 4
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
@@ -958,17 +986,38 @@ class Spectrum:
                 if self.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     if random_phase:
-                        a_w_all_corr = add_random_phase(a_w_all_corr, window_points, delta_t, m)
+                        a_w_all_corr = add_random_phase(a_w_all_corr, window_points, self.delta_t, m)
 
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
                 else:
                     a_w_corr = a_w
 
-                single_spectrum = c4(a_w, a_w_corr, m) / (delta_t * (single_window ** order).sum())
+                single_spectrum = c4(a_w, a_w_corr, m) / (self.delta_t * (single_window ** order).sum())
 
             self.store_single_spectrum(single_spectrum, order, m_var, m_stationarity)
 
     def prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind, m_var, m_stationarity):
+        """
+        Helper function to calculate the frequency array and empty array for the later storage of spectra and errors.
+
+        Parameters
+        ----------
+        orders : {2,3,4}
+            Orders of the spectra to be calculated.
+        f_all_in : array
+            An array containing all possible frequencies given window size and sampling rate OR the list of frequencies
+            at which the spectra should be calculated in the calc_spec_poisson function
+        f_max_ind : int
+            Index of the maximum frequency in f_all_in array to calculate the spectral values at.
+        m_var: int
+            Number of spectra to calculate the variance from (should be set as high as possible).
+        m_stationarity: int
+            Number of spectra after which their mean is stored to varify stationarity of the data.
+
+        Returns
+        -------
+
+        """
         for order in orders:
             if order == 3:
                 self.freq[order] = f_all_in[:int(f_max_ind // 2)]
@@ -993,6 +1042,26 @@ class Spectrum:
         print('Number of points: ' + str(len(self.freq[orders[0]])))
 
     def reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
+        """
+        Helper function to reset all variables in case spectra are recalculated.
+
+        Parameters
+        ----------
+        orders : {2,3,4}
+            Orders of the spectra to be calculated.
+        m: int
+            Spectra for m windows with temporal length T_window are calculated.
+        m_var: int
+            number of spectra to calculate the variance from (should be set as high as possible)
+        m_stationarity: int
+            number of spectra after which their mean is stored to varify stationarity of the data
+        f_lists: list of arrays
+            frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps)
+
+        Returns
+        -------
+
+        """
         self.err_counter = {2: 0, 3: 0, 4: 0}
         self.stationarity_counter = {2: 0, 3: 0, 4: 0}
         for order in orders:
@@ -1009,6 +1078,24 @@ class Spectrum:
             self.S_stationarity_temp[order] = []
 
     def store_final_spectra(self, orders, n_chunks, n_windows, m_var):
+        """
+        Helper function to move spectra for GPU to RAM as the last step of spectra calculation.
+
+        Parameters
+        ----------
+        orders : {2,3,4}
+            Orders of the spectra to be calculated.
+        n_chunks : int
+            Number of calculated spectra. Also used to estimate spectral errors.
+        n_windows : int
+            (TODO) Same as n_chunks
+        m_var : int
+            Number of spectra to calculate the variance from. (Should be set as high as possible.)
+
+        Returns
+        -------
+
+        """
         for order in orders:
             self.S_gpu[order] /= n_chunks
             self.S[order] = self.S_gpu[order].to_ndarray()
@@ -1016,6 +1103,28 @@ class Spectrum:
             self.S_err[order] /= n_windows // m_var * np.sqrt(n_windows)
 
     def find_datapoints_in_windows(self, data, m, start_index, T_window, frame_number, enough_data):
+        """
+        Helper function for the calc_spec_poisson function. Used to find all click times within a window.
+
+        Parameters
+        ----------
+        data : array
+            Full dataset of time stamps
+        m : int
+            Spectra for m windows with temporal length T_window are calculated.
+        start_index : int
+            Index (in the dataset) of the last timestamp in the previous window
+        T_window : float
+            Spectra for m windows with temporal length T_window are calculated.
+        frame_number : int
+            Number of the current frame / spectra to be calculated.
+        enough_data : bool
+            Used to terminate calculation if last window is longer than the latest timestamp
+
+        Returns
+        -------
+
+        """
         windows = []
         for i in range(m):
             end_index = find_end_index(data, start_index, T_window, m, frame_number, i)
@@ -1043,7 +1152,7 @@ class Spectrum:
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [2,4]
         T_window: int
-            spectra for m windows of window_points is calculated
+            Spectra for m windows with temporal length T_window are calculated.
         f_max: float
             maximum frequency of the spectra to be calculated
         backend: {'cpu', 'opencl', 'cuda'}
@@ -1066,7 +1175,7 @@ class Spectrum:
             Number of frames can set to premature termination of spectrum calculation to use only part of the dataset
             to calculate a quick preview.
         m: int
-            spectra for m windows of window_points is calculated
+            Spectra for m windows with temporal length T_window are calculated.
         m_var: int
             number of spectra to calculate the variance from (should be set as high as possible)
         m_stationarity: int
@@ -1183,7 +1292,7 @@ class Spectrum:
                 a_w_all_gpu = add_random_phase(a_w_all_gpu, window_points, self.delta_t, m)
 
             # --------- calculate spectra ----------
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, self.delta_t, m, m_var, m_stationarity,
+            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
                                            single_window, window, chunk_corr_gpu=chunk_corr_gpu,
                                            coherent=coherent, random_phase=random_phase,
                                            window_points=window_points)
@@ -1311,7 +1420,7 @@ class Spectrum:
 
             self.delta_t = T_window / N_window_full
 
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, self.delta_t, m, m_var, m_stationarity,
+            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
                                            single_window)
 
         assert n_windows == n_chunks, 'n_windows not equal to n_chunks'
@@ -1428,7 +1537,7 @@ class Spectrum:
                 a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
 
             # --------- calculate spectra ----------
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, self.delta_t, m, m_var, m_stationarity,
+            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
                                            single_window, window, coherent=coherent)
 
         self.store_final_spectra(orders, n_chunks, n_windows, m_var)
