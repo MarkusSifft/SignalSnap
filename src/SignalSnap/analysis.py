@@ -1032,9 +1032,61 @@ class Spectrum:
 
     def calc_spec(self, order_in, T_window, f_max, backend='cpu', scaling_factor=1,
                   corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                  break_after=1e6, m=10, m_var=10, window_shift=1, random_phase=False,
-                  rect_win=False, m_stationarity=None):
-        """Calculation of spectra of orders 2 to 4 with the arrayfire library."""
+                  break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
+                  rect_win=False, full_import=True):
+
+        """
+        Calculation of spectra of orders 2 to 4 with the arrayfire library.
+
+        Parameters
+        ----------
+        order_in: array of int, str ('all')
+            orders of the spectra to be calculated, e.g., [2,4]
+        T_window: int
+            spectra for m windows of window_points is calculated
+        f_max: float
+            maximum frequency of the spectra to be calculated
+        backend: {'cpu', 'opencl', 'cuda'}
+            backend for arrayfire
+        scaling_factor : float
+            Can be used to scale all data points.
+        corr_shift : int
+            Can be used to shift the correlation data by a certain number of points relative to the main data.
+        filter_func : function
+            A function can be passed which will be applied to the data points in each window.
+        verbose : bool
+            Can be unset to supress printing of various information.
+        coherent : bool
+            (Experimental) Set if moment-based instead of cumulant-based S2 should be calculated. Maybe usefull
+            in the case of non-independent windows.
+        corr_default : {'white noise', None}
+            (TODO) Use white noise as correlation data. Then all higher-order correlations should vanish if the
+            main dataset is stationary and windows are independent.
+        break_after : int
+            Number of frames can set to premature termination of spectrum calculation to use only part of the dataset
+            to calculate a quick preview.
+        m: int
+            spectra for m windows of window_points is calculated
+        m_var: int
+            number of spectra to calculate the variance from (should be set as high as possible)
+        m_stationarity: int
+            number of spectra after which their mean is stored to varify stationarity of the data
+        window_shift : int
+            Sets the time interval between selective windows in units of window length. 1 (default) means window
+            are seamlessly attached. Smaller than 1 mean windows overlap. Can be used to waste less information due to
+            small wight given to values close to the borders of the window due to the window function.
+        random_phase : bool
+            (Experimental) Set if phase of the Fourier coefficients of each window should be randomized.
+            Maybe usefull for non-independent windows.
+        rect_win: bool
+            if true no window function will be applied to the window
+        full_import: bool
+            whether to load all data into RAM (should be set true if possible)
+
+        Returns
+        -------
+
+        """
 
         af.set_backend(backend)
 
@@ -1047,7 +1099,7 @@ class Spectrum:
 
         # -------data setup---------
         if self.data is None:
-            self.data, self.delta_t = import_data(self.path, self.group_key, self.dataset)
+            self.data, self.delta_t = import_data(self.path, self.group_key, self.dataset, full_import=full_import)
         if self.delta_t is None:
             raise MissingValueError('Missing value for delta_t')
 
@@ -1061,7 +1113,7 @@ class Spectrum:
         self.window_points = window_points
 
         if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
-            corr_data, _ = import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset)
+            corr_data, _ = import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset, full_import=full_import)
         elif self.corr_data is not None:
             corr_data = self.corr_data
         else:
@@ -1150,30 +1202,30 @@ class Spectrum:
 
         Parameters
         ----------
-        m_var: int
-            number of spectra to calculate the variance from (should be set as high as possible)
-        rect_win: bool
-            if true no window function will be applied to the window
-        scale_t: float
-            scaling factor to scale timestamps and dt (not yet implemented, due to type error)
-        full_import: bool
-            whether to load all data into RAM (should be set true if possible)
-        m_stationarity: int
-            number of spectra after which their mean is stored to varify stationarity of the data
-        f_lists: list of arrays
-            frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps)
-        sigma_t: float
-            width of approximate confined gaussian windows
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [2,4]
         T_window: int
             spectra for m windows of window_points is calculated
         f_max: float
             maximum frequency of the spectra to be calculated
+        f_lists: list of arrays
+            frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps)
         backend: str
             backend for arrayfire
         m: int
             spectra for m windows of window_points is calculated
+        m_var: int
+            number of spectra to calculate the variance from (should be set as high as possible)
+        m_stationarity: int
+            number of spectra after which their mean is stored to varify stationarity of the data
+        full_import: bool
+            whether to load all data into RAM (should be set true if possible)
+        scale_t: float
+            scaling factor to scale timestamps and dt (not yet implemented, due to type error)
+        sigma_t: float
+            width of approximate confined gaussian windows
+        rect_win: bool
+            if true no window function will be applied to the window
         Returns
         -------
 
@@ -1274,28 +1326,29 @@ class Spectrum:
 
         Parameters
         ----------
-        m_stationarity: int
-            number of spectra after which their mean is stored to varify stationarity of the data
-        m_var: int
-            number of spectra to calculate the variance from (should be set as high as possible)
-        coherent: bool
-            set if second moment should be used instead of cumulant
-        verbose: bool
-            set for more prints
-        rect_win: bool
-            set if no window function should be applied
-        T_bin: int
-            number of points in bin
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [2,4]
         T_window: int
             spectra for m windows of window_points is calculated
+        T_bin: int
+            number of points in bin
         f_max: float
             maximum frequency of the spectra to be calculated
         backend: str
             backend for arrayfire
+        coherent: bool
+            set if second moment should be used instead of cumulant
         m: int
             spectra for m windows of window_points is calculated
+        m_var: int
+            number of spectra to calculate the variance from (should be set as high as possible)
+        m_stationarity: int
+            number of spectra after which their mean is stored to varify stationarity of the data
+        rect_win: bool
+            set if no window function should be applied
+        verbose: bool
+            set for more prints
+
         Returns
         -------
 
