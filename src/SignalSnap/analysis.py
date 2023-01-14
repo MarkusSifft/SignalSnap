@@ -949,10 +949,13 @@ class Spectrum:
             Number of spectra to calculate the variance from (should be set as high as possible).
         m_stationarity: int
             Number of spectra after which their mean is stored to varify stationarity of the data.
-        single_window
-        window
-        chunk_corr_gpu
-        coherent
+        single_window : array
+            Values of window function used to normalize spectra.
+        window : array
+            Matrix containing m single_windows used to apply the window function to the whole frame.
+        chunk_corr_gpu : array
+            Matrix containing one frame of the correlation dataset.
+        coherent : bool
         random_phase
         window_points
 
