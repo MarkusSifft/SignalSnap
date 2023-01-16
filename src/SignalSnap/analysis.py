@@ -857,7 +857,7 @@ class Spectrum:
             y_labels = [str(np.round(i * 1000) / 1000) for i in y_labels]
             ax.set_yticklabels(y_labels)
 
-    def store_single_spectrum(self, single_spectrum, order, m_var, m_stationarity):
+    def __store_single_spectrum(self, single_spectrum, order, m_var, m_stationarity):
 
         """
         Helper function to store the spectra of single frames afterwards used for calculation of errors and overlaps.
@@ -975,7 +975,7 @@ class Spectrum:
         plt.show()
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
-    def fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
+    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
                                   single_window, window=None, chunk_corr_gpu=None,
                                   coherent=False, random_phase=False,
                                   window_points=None):
@@ -1045,9 +1045,9 @@ class Spectrum:
 
                 single_spectrum = c4(a_w, a_w_corr, m) / (self.delta_t * (single_window ** order).sum())
 
-            self.store_single_spectrum(single_spectrum, order, m_var, m_stationarity)
+            self.__store_single_spectrum(single_spectrum, order, m_var, m_stationarity)
 
-    def prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind, m_var, m_stationarity):
+    def __prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind, m_var, m_stationarity):
         """
         Helper function to calculate the frequency array and empty array for the later storage of spectra and errors.
 
@@ -1092,7 +1092,7 @@ class Spectrum:
                     self.S_stationarity_temp[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_stationarity)))
         print('Number of points: ' + str(len(self.freq[orders[0]])))
 
-    def reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
+    def __reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
         """
         Helper function to reset all variables in case spectra are recalculated.
 
@@ -1128,7 +1128,7 @@ class Spectrum:
             self.S_errs[order] = []
             self.S_stationarity_temp[order] = []
 
-    def store_final_spectra(self, orders, n_chunks, n_windows, m_var):
+    def __store_final_spectra(self, orders, n_chunks, n_windows, m_var):
         """
         Helper function to move spectra for GPU to RAM as the last step of spectra calculation.
 
@@ -1153,7 +1153,7 @@ class Spectrum:
 
             self.S_err[order] /= n_windows // m_var * np.sqrt(n_windows)
 
-    def find_datapoints_in_windows(self, data, m, start_index, T_window, frame_number, enough_data):
+    def __find_datapoints_in_windows(self, data, m, start_index, T_window, frame_number, enough_data):
         """
         Helper function for the calc_spec_poisson function. Used to find all click times within a window.
 
@@ -1255,7 +1255,7 @@ class Spectrum:
         else:
             orders = order_in
 
-        self.reset_variables(orders, m, m_var, m_stationarity)
+        self.__reset_variables(orders, m, m_var, m_stationarity)
 
         # -------data setup---------
         if self.data is None:
@@ -1296,7 +1296,7 @@ class Spectrum:
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
-        self.prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
+        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
 
         for i in tqdm_notebook(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
@@ -1343,15 +1343,14 @@ class Spectrum:
                 a_w_all_gpu = add_random_phase(a_w_all_gpu, window_points, self.delta_t, m)
 
             # --------- calculate spectra ----------
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
-                                           single_window, window, chunk_corr_gpu=chunk_corr_gpu,
-                                           coherent=coherent, random_phase=random_phase,
-                                           window_points=window_points)
+            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window,
+                                             window, chunk_corr_gpu=chunk_corr_gpu, coherent=coherent,
+                                             random_phase=random_phase, window_points=window_points)
 
             if n_chunks == break_after:
                 break
 
-        self.store_final_spectra(orders, n_chunks, n_windows, m_var)
+        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
 
         return self.freq, self.S, self.S_err
 
@@ -1398,7 +1397,7 @@ class Spectrum:
         else:
             orders = order_in
 
-        self.reset_variables(orders, m, m_var, m_stationarity, f_lists)
+        self.__reset_variables(orders, m, m_var, m_stationarity, f_lists)
 
         # -------data setup---------
         if self.data is None:
@@ -1429,13 +1428,13 @@ class Spectrum:
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
 
-        self.prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
+        self.__prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
 
         for frame_number in tqdm_notebook(range(n_windows)):
 
-            windows, start_index, enough_data = self.find_datapoints_in_windows(self.data, m, start_index,
-                                                                                T_window / scale_t,
-                                                                                frame_number, enough_data)
+            windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
+                                                                                  T_window / scale_t, frame_number,
+                                                                                  enough_data)
             if not enough_data:
                 break
 
@@ -1471,12 +1470,11 @@ class Spectrum:
 
             self.delta_t = T_window / N_window_full
 
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
-                                           single_window)
+            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
 
         assert n_windows == n_chunks, 'n_windows not equal to n_chunks'
 
-        self.store_final_spectra(orders, n_chunks, n_windows, m_var)
+        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
 
         return self.freq, self.S, self.S_err
 
@@ -1520,7 +1518,7 @@ class Spectrum:
         else:
             orders = order_in
 
-        self.reset_variables(orders, m, m_var, m_stationarity)
+        self.__reset_variables(orders, m, m_var, m_stationarity)
 
         # -------data setup---------
         if self.data is None:
@@ -1544,7 +1542,7 @@ class Spectrum:
         f_mask = freq_all_freq <= f_max
         f_max_ind = sum(f_mask)
         print('preparing frequency array')
-        self.prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
+        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
 
         print('preparing window')
         single_window, _ = cgw(int(bins), self.fs)
@@ -1553,8 +1551,8 @@ class Spectrum:
         print('calculating spectrum')
         for frame_number in tqdm_notebook(range(n_windows)):
 
-            windows, start_index, enough_data = self.find_datapoints_in_windows(self.data, m, start_index, T_window,
-                                                                                frame_number, enough_data)
+            windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index, T_window,
+                                                                                  frame_number, enough_data)
             if not enough_data:
                 break
 
@@ -1588,14 +1586,14 @@ class Spectrum:
                 a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
 
             # --------- calculate spectra ----------
-            self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
-                                           single_window, window, coherent=coherent)
+            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window,
+                                             window, coherent=coherent)
 
-        self.store_final_spectra(orders, n_chunks, n_windows, m_var)
+        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
 
         return self.freq, self.S, self.S_err
 
-    def import_spec_data_for_plotting(self, s_data, s_err, order, imag_plot):
+    def __import_spec_data_for_plotting(self, s_data, s_err, order, imag_plot):
 
         """
         Helper function for importing spectral data during plotting.
@@ -1745,8 +1743,8 @@ class Spectrum:
 
             # -------- S2 ---------
             if order == 2 and self.S[order] is not None and not self.S[order].shape[0] == 0:
-                s_data_plot[order], s_err_plot[order] = self.import_spec_data_for_plotting(s2_data, s2_err, order,
-                                                                                           imag_plot)
+                s_data_plot[order], s_err_plot[order] = self.__import_spec_data_for_plotting(s2_data, s2_err, order,
+                                                                                             imag_plot)
 
                 s2_err_p = []
                 s2_err_m = []
@@ -1825,8 +1823,8 @@ class Spectrum:
                         s_filter = s4_filter
                         s_f = s4_f
 
-                    s_data_plot[order], s_err_plot[order] = self.import_spec_data_for_plotting(s_data, s_err, order,
-                                                                                               imag_plot)
+                    s_data_plot[order], s_err_plot[order] = self.__import_spec_data_for_plotting(s_data, s_err, order,
+                                                                                                 imag_plot)
 
                     if s_err_plot[order] is not None or self.S_err[order] is not None:
                         s_err_plot[order] *= sigma
