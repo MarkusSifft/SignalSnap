@@ -50,11 +50,6 @@ from scipy.ndimage.filters import gaussian_filter
 from tqdm import tqdm_notebook
 
 
-class MissingValueError(Exception):
-    """Base class for missing value exceptions"""
-    pass
-
-
 def pickle_save(path, obj):
     """
     Helper function to pickle system objects
@@ -544,6 +539,19 @@ def add_random_phase(a_w, window_size, delta_t, m):
 
 
 def unit_conversion(f_unit):
+    """
+    Helper function to automatically convert units.
+
+    Parameters
+    ----------
+    f_unit : str
+        Frequency unit
+
+    Returns
+    -------
+    Returns the corresponding time unit.
+    """
+
     if f_unit == 'Hz':
         t_unit = 's'
     elif f_unit == 'kHz':
@@ -845,6 +853,22 @@ class Spectrum:
 
     def store_single_spectrum(self, single_spectrum, order, m_var, m_stationarity):
 
+        """
+        Helper function to store the spectra of single frames afterwards used for calculation of errors and overlaps.
+
+        Parameters
+        ----------
+        single_spectrum : array
+            Spectrum of a single frame.
+        order : {2,3,4}
+            Order of the spectra to be calculated.
+        m_var: int
+            Number of spectra to calculate the variance from (should be set as high as possible).
+        m_stationarity: int
+            Number of spectra after which their mean is stored to varify stationarity of the data.
+
+        """
+
         if self.S_gpu[order] is None:
             self.S_gpu[order] = single_spectrum
         else:
@@ -890,6 +914,24 @@ class Spectrum:
             self.err_counter[order] = 0
 
     def calc_overlap(self, t_unit=None, imag=False, scale_t=1):
+
+        """
+        The overlap between all m_stationarity spectra and the overall mean spectrum is calculated and plotted
+        against time. Can be used to see slow drifts and singular events that differ from the mean spectrum
+
+        Parameters
+        ----------
+        t_unit : str
+            Unit of time
+        imag : bool
+            If set, the imaginary part of all spectra are used for the calculation and plotting
+        scale_t : float
+            Option to scale the time axis
+
+        Returns
+        -------
+
+        """
 
         if t_unit is None:
             t_unit = self.t_unit
@@ -975,7 +1017,8 @@ class Spectrum:
                             self.delta_t * (single_window ** order).sum())
 
                 else:
-                    single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (self.delta_t * (single_window ** order).sum())
+                    single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (
+                                self.delta_t * (single_window ** order).sum())
 
             elif order == 3:
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
@@ -1225,7 +1268,8 @@ class Spectrum:
         self.window_points = window_points
 
         if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
-            corr_data, _ = import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset, full_import=full_import)
+            corr_data, _ = import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
+                                       full_import=full_import)
         elif self.corr_data is not None:
             corr_data = self.corr_data
         else:
@@ -1584,7 +1628,8 @@ class Spectrum:
 
         return s_data, s_err
 
-    def plot(self, order_in=(2, 3, 4), f_max=None, f_min=None, f_unit=None, sigma=1, green_alpha=0.3, arcsinh_plot=False,
+    def plot(self, order_in=(2, 3, 4), f_max=None, f_min=None, f_unit=None, sigma=1, green_alpha=0.3,
+             arcsinh_plot=False,
              arcsinh_const=0.02,
              contours=False, s3_filter=0, s4_filter=0, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
              s4_data=None, s4_err=None, s2_f=None, s3_f=None, s4_f=None, imag_plot=False, plot_error=True,
