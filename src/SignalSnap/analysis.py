@@ -850,7 +850,7 @@ class Spectrum:
 
         x, y = np.meshgrid(time_axis, s2_f)
 
-        c = ax.pcolormesh(x, y, s2_array, cmap='rainbow', vmin=vmin, vmax=vmax)  # norm=norm)
+        c = ax.pcolormesh(x, y, s2_array, cmap='rainbow', vmin=vmin, vmax=vmax, shading='auto')  # norm=norm)
         if contours:
             ax.contour(x, y, s2_array, 7, colors='k', linewidths=0.7)
 
