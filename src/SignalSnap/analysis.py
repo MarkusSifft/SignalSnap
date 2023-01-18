@@ -1329,7 +1329,7 @@ class Spectrum:
                 self.first_frame_plotted = True
 
             chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
-            if self.corr_data == 'white_noise':  # use white noise to check for false correlations
+            if corr_default == 'white_noise':  # use white noise to check for false correlations
                 chunk_corr = np.random.randn(window_points, 1, m)
                 chunk_corr_gpu = to_gpu(chunk_corr)
             elif self.corr_data is not None:
