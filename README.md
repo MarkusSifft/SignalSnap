@@ -14,7 +14,7 @@ Here, a few outstanding features of SignalSnap:
 * Functions for conversion of Numpy array to hdf data is also provided ([example](Examples/Conversion%20of%20CSV%20to%20h5.ipynb))
 * Functions for storing and loading calculated data together with metadata ([example](Examples/Storing%20and%20Loading%20Spectra.ipynb)) 
 * Correlations between two time series can be calculated ([example](Examples/Correlations%20Between%20Two%20Time%20Series.ipynb))
-* All calculation can be performed on GPU (NVidia and AMD) (see Arrayfire) 
+* All calculation can be performed on GPU (NVidia and AMD) (see Arrayfire) ([example](Examples/Comparing%20CPU%20to%20GPU.ipynb))
 * Advanced plotting options for two-dimensional higher-order spectra 
 * Usage of unbiased estimators for higher-order cumulants (see Literature)
 * Efficient implementation of the confined Gaussian window for an optimal RMS time-bandwidth product (see Literature)
