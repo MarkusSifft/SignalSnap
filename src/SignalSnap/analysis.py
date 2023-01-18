@@ -922,15 +922,20 @@ class Spectrum:
 
         if self.err_counter[order] % m_var == 0:
             if order == 2:
-                self.S_err_gpu = af.sqrt(
-                    m_var / (m_var - 1) * (af.mean(self.S_errs[order] * af.conjg(self.S_errs[order]), dim=1) -
-                                           af.mean(self.S_errs[order], dim=1) * af.conjg(
-                                af.mean(self.S_errs[order], dim=1))))
-
+                dim = 1
             else:
-                self.S_err_gpu = af.sqrt(m_var / (m_var - 1) * (
-                        af.mean(self.S_errs[order] * af.conjg(self.S_errs[order]), dim=2) -
-                        af.mean(self.S_errs[order], dim=2) * af.conjg(af.mean(self.S_errs[order], dim=2))))
+                dim = 2
+
+            S_err_gpu_real = af.sqrt(
+                m_var / (m_var - 1) * (af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
+                                       af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
+                            af.real(self.S_errs[order]), dim=dim)))
+            S_err_gpu_imag = af.sqrt(
+                m_var / (m_var - 1) * (af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
+                                       af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
+                            af.imag(self.S_errs[order]), dim=dim)))
+
+            self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
 
             if self.S_err[order] is None:
                 self.S_err[order] = self.S_err_gpu.to_ndarray()
