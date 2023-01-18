@@ -1153,6 +1153,7 @@ class Spectrum:
             self.S_err[order] = None
             self.S_errs[order] = []
             self.S_stationarity_temp[order] = []
+            self.S_stationarity[order] = []
 
     def __store_final_spectra(self, orders, n_chunks, n_windows, m_var):
         """
