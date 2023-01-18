@@ -18,7 +18,7 @@ Here, a few outstanding features of SignalSnap:
 * Advanced plotting options for two-dimensional higher-order spectra 
 * Usage of unbiased estimators for higher-order cumulants (see Literature)
 * Efficient implementation of the confined Gaussian window for an optimal RMS time-bandwidth product (see Literature)
-* Special functions for the verification of the stationarity of a signal
+* Special functions for the verification of the stationarity of a signal ([example](Examples/Testing%20the%20Stationarity%20of%20a%20Signal.ipynb))
 
 ## Installation
 SignalSnap is available on `pip` and can be installed with 
