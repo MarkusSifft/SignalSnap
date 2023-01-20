@@ -1220,7 +1220,7 @@ class Spectrum:
     def calc_spec(self, order_in, T_window, f_max, backend='cpu', scaling_factor=1,
                   corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                   break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
-                  rect_win=False, full_import=True):
+                  rect_win=False, full_import=True, show_first_frame=True):
 
         """
         Calculation of spectra of orders 2 to 4 with the arrayfire library.
@@ -1330,7 +1330,7 @@ class Spectrum:
 
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
 
-            if not self.first_frame_plotted:
+            if not self.first_frame_plotted and show_first_frame:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
 

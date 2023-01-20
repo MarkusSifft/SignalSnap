@@ -23,7 +23,7 @@ Here, a few outstanding features of SignalSnap:
 ## Installation
 SignalSnap is available on `pip` and can be installed with 
 ```bash
-pip install signalsnap
+pip install SignalSnap
 ```
 
 ## Documentation
@@ -36,13 +36,14 @@ to get you started. We will generate some white noise as signal/dataset store it
 ```python
 import SignalSnap as snp
 import numpy as np
+
 rng = np.random.default_rng()
 
 # ------ Generation of white noise -----
 f_unit = 'kHz'
-fs = 10e3 # sampling rate in kHz
-N = 1e5 # number of points
-t = np.arange(N) / fs # unit is automatically chosen to be 1/f_unit = ms
+fs = 10e3  # sampling rate in kHz
+N = 1e5  # number of points
+t = np.arange(N) / fs  # unit is automatically chosen to be 1/f_unit = ms
 y = rng.normal(scale=1, size=t.shape)
 ```
 
