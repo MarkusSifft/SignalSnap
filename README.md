@@ -1,7 +1,7 @@
 # SignalSnap: Signal Analysis In Python Made Easy 
 by M. Sifft and D. Hägele
 
-We present a fast Python toolbox for the higher-order spectral analysis of time series. The usual second-order 
+We present a fast Python toolbox for higher-order spectral analysis of time series. The usual second-order 
 power spectrum and its higher-order generalization - so-called bi- and trispectra - are efficiently calculated 
 on any platform. The toolbox supports GPU acceleration using the ArrayFire library. The treatment of large datasets 
 is not limited by available RAM. We were able to process 11.6 GB of data (given in the hdf5 format) within just one 
@@ -12,12 +12,12 @@ Here, a few outstanding features of SignalSnap:
 * Errors of spectral values are automatically calculated ([beginners example](Examples/Calculating%20Spectra%20from%20Numpy%20Array.ipynb), [example](Examples/Higher-Order%20Example:%20Mixing%20of%20Gaussian%20Noise.ipynb))
 * Support for just-in-time import from hdf data (dataset does not have to fit in RAM) ([example](Examples/Calculating%20Polyspectra%20from%20Measurement.ipynb))
 * Functions for conversion of Numpy array to hdf data is also provided ([example](Examples/Conversion%20of%20CSV%20to%20h5.ipynb))
-* Functions for storing and loading calculated data together with metadata ([example](Examples/Storing%20and%20Loading%20Spectra.ipynb)) 
+* Functions for storing and loading calculated spectra together with metadata ([example](Examples/Storing%20and%20Loading%20Spectra.ipynb)) 
 * Correlations between two time series can be calculated ([example](Examples/Correlations%20Between%20Two%20Time%20Series.ipynb))
 * All calculation can be performed on GPU (NVidia and AMD) (see Arrayfire) ([example](Examples/Comparing%20CPU%20to%20GPU.ipynb))
-* Advanced plotting options for two-dimensional higher-order spectra 
-* Usage of unbiased estimators for higher-order cumulants (see Literature)
-* Efficient implementation of the confined Gaussian window for an optimal RMS time-bandwidth product (see Literature)
+* Advanced plotting options for two-dimensional higher-order spectra (as seen in most examples)
+* Usage of unbiased estimators for higher-order cumulants (see Literature below)
+* Efficient implementation of the confined Gaussian window for an optimal RMS time-bandwidth product (see Literature below)
 * Special functions for the verification of the stationarity of a signal ([example](Examples/Testing%20the%20Stationarity%20of%20a%20Signal.ipynb))
 
 ## Installation
@@ -28,7 +28,8 @@ pip install signalsnap
 
 ### Installation of Arrayfire
 For GPU calculations the high performance library Arrayfire is used. The Python wrapper ([see here](https://github.com/arrayfire/arrayfire-python)) 
-is automatically installed when installing SignalSnap, however, [ArrayFire C/C++ libraries](https://arrayfire.com/download) need to be installed separately.
+is automatically installed when installing SignalSnap, however, [ArrayFire C/C++ libraries](https://arrayfire.com/download) need to be installed separately. 
+Instructioins can be found can be found [here](https://github.com/arrayfire/arrayfire-python) and [here](https://arrayfire.org/docs/installing.htm#gsc.tab=0).
 
 
 ## Documentation
@@ -36,7 +37,7 @@ A comprehensive documentation of SignalSnap will follow soon.
 
 ### Examples
 Examples for every function of the package are currently added to the folder Examples. Here are a few lines 
-to get you started. We will generate some white noise as signal/dataset store it as Numpy array called `y`.
+to get you started. We will generate some white noise as signal/dataset and store it as Numpy array called `y`.
 
 ```python
 import signalsnap as snp

@@ -4,8 +4,8 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "SignalSnap"
-version = "0.1.5"
+name = "signalsnap"
+version = "0.1.6"
 authors = [
 { name="Markus Sifft", email="markus.sifft@rub.de" },
 ]
