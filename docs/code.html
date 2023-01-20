@@ -1,0 +1,717 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Code Documentation &#8212; signalsnap  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to SignalSnaps’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.signalsnap.analysis">
+<span id="code-documentation"></span><h1>Code Documentation<a class="headerlink" href="#module-src.signalsnap.analysis" title="Permalink to this headline">¶</a></h1>
+<dl class="py exception">
+<dt id="src.signalsnap.analysis.MissingValueError">
+<em class="property">exception </em><code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">MissingValueError</code><a class="headerlink" href="#src.signalsnap.analysis.MissingValueError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for missing value exceptions</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="src.signalsnap.analysis.Spectrum">
+<em class="property">class </em><code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">Spectrum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">group_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dataset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">delta_t</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">corr_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">corr_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">corr_group_key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">corr_dataset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">f_unit</span><span class="o">=</span><span class="default_value">'Hz'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spectrum class stores signal data, calculated spectra and error of spectral values.
+Allows for the calculation of the polyspectra of the signal and their visualization.
+Also hold methods for saving spectrum objects.</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>Path to h5 file with stored signal</p>
+</dd>
+<dt>group_key<span class="classifier">str</span></dt><dd><p>Group key for h5 file</p>
+</dd>
+<dt>dataset<span class="classifier">str</span></dt><dd><p>Name of the dataset in h5 file</p>
+</dd>
+<dt>data<span class="classifier">array</span></dt><dd><p>Signal to be analyzed as Numpy array</p>
+</dd>
+<dt>corr_data<span class="classifier">array</span></dt><dd><p>Second signal used as correlation data as Numpy array</p>
+</dd>
+<dt>corr_path<span class="classifier">str</span></dt><dd><p>Path to h5 file with stored second signal for correlation</p>
+</dd>
+<dt>corr_group_key<span class="classifier">str</span></dt><dd><p>Group key for h5 file with correlation signal</p>
+</dd>
+<dt>corr_dataset<span class="classifier">str</span></dt><dd><p>Name of the dataset in h5 file with correlation signal</p>
+</dd>
+</dl>
+<dl>
+<dt>corr_data_path: str</dt><dd><p>Path to h5 file with a second stored signal to be correlated with the first on (see path)</p>
+</dd>
+<dt>T_window<span class="classifier">float</span></dt><dd><p>Length of window in seconds (or unit of choice) used for the calculation of
+any spectra</p>
+</dd>
+<dt>path<span class="classifier">str</span></dt><dd><p>Path to h5 file with stored signal</p>
+</dd>
+<dt>freq<span class="classifier">array</span></dt><dd><p>Stores frequencies at with the spectra are calculated</p>
+</dd>
+<dt>f_max<span class="classifier">float</span></dt><dd><p>Used to limit the upper frequency to calculate spectral values at (especially important for high sampling rates)</p>
+</dd>
+<dt>fs<span class="classifier">float</span></dt><dd><p>Stores the sampling rate of the signal</p>
+</dd>
+<dt>f_lists: dict</dt><dd><p>Used for the calculation of Poisson spectra. Stores all frequency values for the calculation of the
+non-uniform discreet Fourier transformation. (Also used for plotting with broken frequency axis.)</p>
+</dd>
+<dt>S<span class="classifier">dict</span></dt><dd><p>Stores spectra values (final storage at the end of the calculation)</p>
+</dd>
+<dt>S_gpu<span class="classifier">dict</span></dt><dd><p>Temporarily stores spectra values during calculation on the GPU</p>
+</dd>
+<dt>S_err<span class="classifier">dict</span></dt><dd><p>Stores errors of spectra values (final storage at the end of the calculation)</p>
+</dd>
+<dt>S_err_gpu<span class="classifier">dict</span></dt><dd><p>Temporarily stores errors of spectra values during calculation on the GPU</p>
+</dd>
+<dt>S_errs<span class="classifier">dict</span></dt><dd><p>Temporarily stores m_var spectra used for the calculation of the errors</p>
+</dd>
+<dt>S_stationarity_temp<span class="classifier">dict</span></dt><dd><p>Stores m_stationarity spectra which are then averaged and used for the stationarity plot</p>
+</dd>
+<dt>S_stationarity<span class="classifier">dict</span></dt><dd><p>Stores the m_stationarity averaged spectra used for the stationarity plot</p>
+</dd>
+<dt>group_key<span class="classifier">str</span></dt><dd><p>Group key of the dataset within the h5 file</p>
+</dd>
+<dt>dataset<span class="classifier">str</span></dt><dd><p>Name of the dataset in the h5 file</p>
+</dd>
+<dt>window_points<span class="classifier">int</span></dt><dd><p>Number of points in a window</p>
+</dd>
+<dt>m<span class="classifier">int</span></dt><dd><p>Number of windows for the estimation of the cumulant</p>
+</dd>
+<dt>m_var<span class="classifier">int</span></dt><dd><p>m_var single spectra are used at a time for the calculation of the spectral errors</p>
+</dd>
+<dt>m_stationarity<span class="classifier">int</span></dt><dd><p>Number of spectra which are then averaged and used for the stationarity plot</p>
+</dd>
+<dt>first_frame_plotted<span class="classifier">bool</span></dt><dd><p>If true the first frame is plotted during the calculation of the spectra</p>
+</dd>
+<dt>delta_t<span class="classifier">float</span></dt><dd><p>Inverse of the sampling rate of the signal</p>
+</dd>
+<dt>data<span class="classifier">array / pointer</span></dt><dd><p>Stores the full dataset or is a pointer to the data in the h5 file (recommended of the dataset
+is larger than your RAM)</p>
+</dd>
+<dt>corr_data<span class="classifier">array / pointer</span></dt><dd><p>Stores the full second dataset or is a pointer to the data in the h5 file (recommended of the dataset
+is larger than your RAM)</p>
+</dd>
+<dt>corr_group_key<span class="classifier">str</span></dt><dd><p>Group key of the second dataset within the h5 file</p>
+</dd>
+<dt>corr_dataset<span class="classifier">str</span></dt><dd><p>Name of the second dataset in the h5 file</p>
+</dd>
+<dt>main_data<span class="classifier">array / pointer</span></dt><dd><p>(outdated / for old methods) Stores the full dataset or is a pointer to the data in the h5 file (recommended of the dataset
+is larger than your RAM)</p>
+</dd>
+<dt>err_counter<span class="classifier">dict</span></dt><dd><blockquote>
+<div><p>Counts the number single spectra already stored for the calculation of errors</p>
+</div></blockquote>
+<dl class="simple">
+<dt>stationarity_counter<span class="classifier">dict</span></dt><dd><p>Counts the number single spectra already stored for the averaging for the stationarity plot</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.calc_overlap">
+<code class="sig-name descname">calc_overlap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t_unit</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imag</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">scale_t</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.calc_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>The overlap between all m_stationarity spectra and the overall mean spectrum is calculated and plotted
+against time. Can be used to see slow drifts and singular events that differ from the mean spectrum</p>
+<dl class="simple">
+<dt>t_unit<span class="classifier">str</span></dt><dd><p>Unit of time</p>
+</dd>
+<dt>imag<span class="classifier">bool</span></dt><dd><p>If set, the imaginary part of all spectra are used for the calculation and plotting</p>
+</dd>
+<dt>scale_t<span class="classifier">float</span></dt><dd><p>Option to scale the time axis</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.calc_spec">
+<code class="sig-name descname">calc_spec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">order_in</span></em>, <em class="sig-param"><span class="n">T_window</span></em>, <em class="sig-param"><span class="n">f_max</span></em>, <em class="sig-param"><span class="n">backend</span><span class="o">=</span><span class="default_value">'cpu'</span></em>, <em class="sig-param"><span class="n">scaling_factor</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">corr_shift</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">filter_func</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">coherent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">corr_default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">break_after</span><span class="o">=</span><span class="default_value">1000000.0</span></em>, <em class="sig-param"><span class="n">m</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_var</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_stationarity</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">window_shift</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">random_phase</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">rect_win</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">full_import</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">show_first_frame</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.calc_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculation of spectra of orders 2 to 4 with the arrayfire library.</p>
+<dl class="simple">
+<dt>order_in: array of int, str (‘all’)</dt><dd><p>orders of the spectra to be calculated, e.g., [2,4]</p>
+</dd>
+<dt>T_window: int</dt><dd><p>Spectra for m windows with temporal length T_window are calculated.</p>
+</dd>
+<dt>f_max: float</dt><dd><p>maximum frequency of the spectra to be calculated</p>
+</dd>
+<dt>backend: {‘cpu’, ‘opencl’, ‘cuda’}</dt><dd><p>backend for arrayfire</p>
+</dd>
+<dt>scaling_factor<span class="classifier">float</span></dt><dd><p>Can be used to scale all data points.</p>
+</dd>
+<dt>corr_shift<span class="classifier">int</span></dt><dd><p>Can be used to shift the correlation data by a certain number of points relative to the main data.</p>
+</dd>
+<dt>filter_func<span class="classifier">function</span></dt><dd><p>A function can be passed which will be applied to the data points in each window.</p>
+</dd>
+<dt>verbose<span class="classifier">bool</span></dt><dd><p>Can be unset to supress printing of various information.</p>
+</dd>
+<dt>coherent<span class="classifier">bool</span></dt><dd><p>(Experimental) Set if moment-based instead of cumulant-based S2 should be calculated. Maybe usefull
+in the case of non-independent windows.</p>
+</dd>
+<dt>corr_default<span class="classifier">{‘white noise’, None}</span></dt><dd><p>(TODO) Use white noise as correlation data. Then all higher-order correlations should vanish if the
+main dataset is stationary and windows are independent.</p>
+</dd>
+<dt>break_after<span class="classifier">int</span></dt><dd><p>Number of frames can set to premature termination of spectrum calculation to use only part of the dataset
+to calculate a quick preview.</p>
+</dd>
+<dt>m: int</dt><dd><p>Spectra for m windows with temporal length T_window are calculated.</p>
+</dd>
+<dt>m_var: int</dt><dd><p>number of spectra to calculate the variance from (should be set as high as possible)</p>
+</dd>
+<dt>m_stationarity: int</dt><dd><p>number of spectra after which their mean is stored to varify stationarity of the data</p>
+</dd>
+<dt>window_shift<span class="classifier">int</span></dt><dd><p>Sets the time interval between selective windows in units of window length. 1 (default) means window
+are seamlessly attached. Smaller than 1 mean windows overlap. Can be used to waste less information due to
+small wight given to values close to the borders of the window due to the window function.</p>
+</dd>
+<dt>random_phase<span class="classifier">bool</span></dt><dd><p>(Experimental) Set if phase of the Fourier coefficients of each window should be randomized.
+Maybe usefull for non-independent windows.</p>
+</dd>
+<dt>rect_win: bool</dt><dd><p>if true no window function will be applied to the window</p>
+</dd>
+<dt>full_import: bool</dt><dd><p>whether to load all data into RAM (should be set true if possible)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.calc_spec_mini_bins">
+<code class="sig-name descname">calc_spec_mini_bins</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">order_in</span></em>, <em class="sig-param"><span class="n">T_window</span></em>, <em class="sig-param"><span class="n">T_bin</span></em>, <em class="sig-param"><span class="n">f_max</span></em>, <em class="sig-param"><span class="n">backend</span><span class="o">=</span><span class="default_value">'opencl'</span></em>, <em class="sig-param"><span class="n">coherent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">m</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_var</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_stationarity</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rect_win</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.calc_spec_mini_bins" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>order_in: array of int, str (‘all’)</dt><dd><p>orders of the spectra to be calculated, e.g., [2,4]</p>
+</dd>
+<dt>T_window: int</dt><dd><p>spectra for m windows of window_points is calculated</p>
+</dd>
+<dt>T_bin: int</dt><dd><p>number of points in bin</p>
+</dd>
+<dt>f_max: float</dt><dd><p>maximum frequency of the spectra to be calculated</p>
+</dd>
+<dt>backend: str</dt><dd><p>backend for arrayfire</p>
+</dd>
+<dt>coherent: bool</dt><dd><p>set if second moment should be used instead of cumulant</p>
+</dd>
+<dt>m: int</dt><dd><p>spectra for m windows of window_points is calculated</p>
+</dd>
+<dt>m_var: int</dt><dd><p>number of spectra to calculate the variance from (should be set as high as possible)</p>
+</dd>
+<dt>m_stationarity: int</dt><dd><p>number of spectra after which their mean is stored to varify stationarity of the data</p>
+</dd>
+<dt>rect_win: bool</dt><dd><p>set if no window function should be applied</p>
+</dd>
+<dt>verbose: bool</dt><dd><p>set for more prints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.calc_spec_poisson">
+<code class="sig-name descname">calc_spec_poisson</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">order_in</span></em>, <em class="sig-param"><span class="n">T_window</span></em>, <em class="sig-param"><span class="n">f_max</span></em>, <em class="sig-param"><span class="n">f_lists</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">backend</span><span class="o">=</span><span class="default_value">'opencl'</span></em>, <em class="sig-param"><span class="n">m</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_var</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">m_stationarity</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">full_import</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">scale_t</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">sigma_t</span><span class="o">=</span><span class="default_value">0.14</span></em>, <em class="sig-param"><span class="n">rect_win</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.calc_spec_poisson" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>order_in: array of int, str (‘all’)</dt><dd><p>orders of the spectra to be calculated, e.g., [2,4]</p>
+</dd>
+<dt>T_window: int</dt><dd><p>spectra for m windows of window_points is calculated</p>
+</dd>
+<dt>f_max: float</dt><dd><p>maximum frequency of the spectra to be calculated</p>
+</dd>
+<dt>f_lists: list of arrays</dt><dd><p>frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps)</p>
+</dd>
+<dt>backend: str</dt><dd><p>backend for arrayfire</p>
+</dd>
+<dt>m: int</dt><dd><p>spectra for m windows of window_points is calculated</p>
+</dd>
+<dt>m_var: int</dt><dd><p>number of spectra to calculate the variance from (should be set as high as possible)</p>
+</dd>
+<dt>m_stationarity: int</dt><dd><p>number of spectra after which their mean is stored to varify stationarity of the data</p>
+</dd>
+<dt>full_import: bool</dt><dd><p>whether to load all data into RAM (should be set true if possible)</p>
+</dd>
+<dt>scale_t: float</dt><dd><p>scaling factor to scale timestamps and dt (not yet implemented, due to type error)</p>
+</dd>
+<dt>sigma_t: float</dt><dd><p>width of approximate confined gaussian windows</p>
+</dd>
+<dt>rect_win: bool</dt><dd><p>if true no window function will be applied to the window</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.plot">
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">order_in</span><span class="o">=</span><span class="default_value">2, 3, 4</span></em>, <em class="sig-param"><span class="n">f_max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">f_min</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">f_unit</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sigma</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">green_alpha</span><span class="o">=</span><span class="default_value">0.3</span></em>, <em class="sig-param"><span class="n">arcsinh_plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">arcsinh_const</span><span class="o">=</span><span class="default_value">0.02</span></em>, <em class="sig-param"><span class="n">contours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">s3_filter</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">s4_filter</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">s2_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s2_err</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s3_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s3_err</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s4_data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s4_err</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s2_f</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s3_f</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s4_f</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imag_plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">plot_error</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">broken_lims</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the spectral data of any combination of spectral orders together with errors. Has many options to
+customize the appearance and choose the plotted frequencies.</p>
+<dl class="simple">
+<dt>order_in<span class="classifier">list {2,3,4}</span></dt><dd><p>Spectral orders to be plotted. Multiple orders can be chosen.</p>
+</dd>
+<dt>f_max<span class="classifier">float</span></dt><dd><p>Sets the upper limit of the frequency axis. If set higher than the Nyquist frequency, the
+Nyquist frequency will be chosen as limit.</p>
+</dd>
+<dt>f_min<span class="classifier">float</span></dt><dd><p>Sets the lower limit of the frequency axis.</p>
+</dd>
+<dt>f_unit<span class="classifier">str or None</span></dt><dd><p>Frequency unit can be passed labeling the plot. If None, the unit which was set when creating the
+Spectrum object is used.</p>
+</dd>
+<dt>sigma<span class="classifier">float</span></dt><dd><p>Sets the number of standard deviations as error to be shown in the two-dimensional plots of order 3 and 4.
+The spectral values are colored green if the number of standard deviations is higher than the specific
+spectral value.</p>
+</dd>
+<dt>green_alpha<span class="classifier">float</span></dt><dd><p>Sets the alpha value for the green error tiling. (Value between 0 and 1)</p>
+</dd>
+<dt>arcsinh_plot<span class="classifier">bool</span></dt><dd><p>if set the spectral values are scale with an arcsinh function (similar to log but also works for negative
+values). The amount of scaling is given by the arcsinh_const.</p>
+</dd>
+<dt>arcsinh_const<span class="classifier">float</span></dt><dd><p>constant to set amount of arcsinh scaling. The lower, the stronger.</p>
+</dd>
+<dt>contours<span class="classifier">bool</span></dt><dd><p>If set contours are shown in the 2D plots.</p>
+</dd>
+<dt>s3_filter<span class="classifier">float</span></dt><dd><p>Applies a Gaussian filter the width s3_filter to the third-order data</p>
+</dd>
+<dt>s4_filter<span class="classifier">float</span></dt><dd><p>Applies a Gaussian filter the width s4_filter to the fourth-order data</p>
+</dd>
+<dt>s2_data<span class="classifier">array</span></dt><dd><p>Spectral data for the power spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s2_err<span class="classifier">array</span></dt><dd><p>Spectral errors for the power spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s3_data<span class="classifier">array</span></dt><dd><p>Spectral data for the third-order spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s3_err<span class="classifier">array</span></dt><dd><p>Spectral errors for the third-order spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s4_data<span class="classifier">array</span></dt><dd><p>Spectral data for the fourth-order spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s4_err<span class="classifier">array</span></dt><dd><p>Spectral errors for the fourth-order spectrum can be provided and is than used instead of the calculated values
+stored in the object.</p>
+</dd>
+<dt>s2_f<span class="classifier">array</span></dt><dd><p>Frequency values for the power spectrum can be provided and is than used instead of the values
+stored in the object.</p>
+</dd>
+<dt>s3_f<span class="classifier">array</span></dt><dd><p>Frequency values for the third-order spectrum can be provided and is than used instead of the values
+stored in the object.</p>
+</dd>
+<dt>s4_f<span class="classifier">array</span></dt><dd><p>Frequency values for the fourth-order spectrum can be provided and is than used instead of the values
+stored in the object.</p>
+</dd>
+<dt>imag_plot<span class="classifier">bool</span></dt><dd><p>If set imaginary part of the spectral values are plotted.</p>
+</dd>
+<dt>plot_error<span class="classifier">bool</span></dt><dd><p>If set 1 to 5 sigma error bands are shown in the power spectrum.</p>
+</dd>
+<dt>broken_lims<span class="classifier">list of lists</span></dt><dd><p>The low and upper limit of each section of a broken frequency axis can be provided, given that
+the frequency arrays (s2_f, s3_f, s4_f) contain disconnected sections.</p>
+</dd>
+</dl>
+<p>Return the matplotlib figure.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.save_spec">
+<code class="sig-name descname">save_spec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.save_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for storing the Spectrum object. Pointers and the full dataset are remove from the object before saving.</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>Location of stored file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="src.signalsnap.analysis.Spectrum.stationarity_plot">
+<code class="sig-name descname">stationarity_plot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f_unit</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t_unit</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">contours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">s2_filter</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">arcsinh_plot</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">arcsinh_const</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">f_max</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">normalize</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.Spectrum.stationarity_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the S_stationarity spectra versus time to make changes over time visible</p>
+<dl class="simple">
+<dt>f_unit<span class="classifier">str</span></dt><dd><p>frequency unit</p>
+</dd>
+<dt>t_unit<span class="classifier">str</span></dt><dd><p>time unit</p>
+</dd>
+<dt>contours<span class="classifier">bool</span></dt><dd><p>if set contours are drawn</p>
+</dd>
+<dt>s2_filter<span class="classifier">float</span></dt><dd><p>value for sigma of a Gaussian filter in direction of time (usefull in the case of noisy data)</p>
+</dd>
+<dt>arcsinh_plot<span class="classifier">bool</span></dt><dd><p>if set the spectral values are scale with an arcsinh function (similar to log but also works for negative
+values). The amount of scaling is given by the arcsinh_const.</p>
+</dd>
+<dt>arcsinh_const<span class="classifier">float</span></dt><dd><p>constant to set amount of arcsinh scaling. The lower, the stronger.</p>
+</dd>
+<dt>f_max<span class="classifier">float</span></dt><dd><p>maximum frequency to plot on the fequency axis</p>
+</dd>
+<dt>normalize<span class="classifier">[‘area’, ‘zero’]</span></dt><dd><p>for better visualization all spectra can be normalized to set the
+area under the S2 to 1 or the value at S2(0) to 1.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.add_random_phase">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">add_random_phase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a_w</span></em>, <em class="sig-param"><span class="n">window_size</span></em>, <em class="sig-param"><span class="n">delta_t</span></em>, <em class="sig-param"><span class="n">m</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.add_random_phase" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental function) Adds a random phase proportional to the frequency to deal with ultra coherent signals</p>
+<dl class="simple">
+<dt>m<span class="classifier">int</span></dt><dd><p>number of windows per frame</p>
+</dd>
+<dt>delta_t<span class="classifier">float</span></dt><dd><p>inverse of the sampling rate of the signal</p>
+</dd>
+<dt>window_size<span class="classifier">int</span></dt><dd><p>size of the window in points</p>
+</dd>
+<dt>a_w<span class="classifier">array</span></dt><dd><p>Fourier coefficients pf the window</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.apply_window">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">apply_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">window_width</span></em>, <em class="sig-param"><span class="n">t_clicks</span></em>, <em class="sig-param"><span class="n">fs</span></em>, <em class="sig-param"><span class="n">sigma_t</span><span class="o">=</span><span class="default_value">0.14</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.apply_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function take the timestamps of the detector and applies the window function as an envelope treating the
+clicks as steps with height one.</p>
+<dl class="simple">
+<dt>window_width<span class="classifier">float</span></dt><dd><p>timely width of the window in unit of choice</p>
+</dd>
+<dt>t_clicks<span class="classifier">array</span></dt><dd><p>timestamps of the dataset that lie within the current window</p>
+</dd>
+<dt>fs<span class="classifier">float</span></dt><dd><p>sampling rate of the signal</p>
+</dd>
+<dt>sigma_t<span class="classifier">float</span></dt><dd><p>parameter of the approx. confined gaussian window (here chosen to be 0.14)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.arcsinh_scaling">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">arcsinh_scaling</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s_data</span></em>, <em class="sig-param"><span class="n">arcsinh_const</span></em>, <em class="sig-param"><span class="n">order</span></em>, <em class="sig-param"><span class="n">s_err</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s_err_p</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">s_err_m</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.arcsinh_scaling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to improve visibility in plotting (similar to a log scale but also works for negative values)</p>
+<dl class="simple">
+<dt>s_data<span class="classifier">array</span></dt><dd><p>spectral values of any order</p>
+</dd>
+<dt>arcsinh_const<span class="classifier">float</span></dt><dd><p>these parameters sets the rescaling amount (the smaller, the stronger the rescaling)</p>
+</dd>
+<dt>order<span class="classifier">int</span></dt><dd><p>important since the error arrays are called differently in the second-order case</p>
+</dd>
+<dt>s_err<span class="classifier">array</span></dt><dd><p>spectral errors of order 3 or 4</p>
+</dd>
+<dt>s_err_p<span class="classifier">array</span></dt><dd><p>spectral values + error of order 2</p>
+</dd>
+<dt>s_err_m<span class="classifier">array</span></dt><dd><p>spectral values - error of order 2</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.c2">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">c2</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a_w</span></em>, <em class="sig-param"><span class="n">a_w_corr</span></em>, <em class="sig-param"><span class="n">m</span></em>, <em class="sig-param"><span class="n">coherent</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.c2" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculation of c2 for power spectrum</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.c3">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">c3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a_w1</span></em>, <em class="sig-param"><span class="n">a_w2</span></em>, <em class="sig-param"><span class="n">a_w3</span></em>, <em class="sig-param"><span class="n">m</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.c3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculation of c3 for bispectrum (see arXiv:1904.12154)
+# C_3 = m^2 / (m - 1)(m - 2) * (&lt; a_w1 * a_w2 * a_w3 &gt;
+#                                      sum_123
+#       - &lt; a_w1 &gt;&lt; a_w2 * a_w3 &gt; - &lt; a_w1 * a_w2 &gt;&lt; a_w3 &gt; - &lt; a_w1 * a_w3 &gt;&lt; a_w2 &gt;
+#          sum_1      sum_23           sum_12        sum_3         sum_13      sum_2
+#       + 2 &lt; a_w1 &gt;&lt; a_w2 &gt;&lt; a_w3 &gt;)
+#             sum_1   sum_2   sum_3
+# with w3 = - w1 - w2</p>
+<dl class="simple">
+<dt>a_w1<span class="classifier">array</span></dt><dd><p>Fourier coefficients of signal as vertical array</p>
+</dd>
+<dt>a_w2<span class="classifier">array</span></dt><dd><p>Fourier coefficients of signal as horizontal array</p>
+</dd>
+<dt>a_w3<span class="classifier">array</span></dt><dd><p>a_w1+w2 as matrix</p>
+</dd>
+<dt>m<span class="classifier">int</span></dt><dd><p>Number of windows used for the calculation of one spectrum</p>
+</dd>
+</dl>
+<p>Returns the c3 estimator as matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.c4">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">c4</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a_w</span></em>, <em class="sig-param"><span class="n">a_w_corr</span></em>, <em class="sig-param"><span class="n">m</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.c4" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculation of c4 for trispectrum
+# C_4 = (Eq. 60, in arXiv:1904.12154)</p>
+<dl class="simple">
+<dt>a_w<span class="classifier">array</span></dt><dd><p>Fourier coefficients of the signal</p>
+</dd>
+<dt>a_w_corr<span class="classifier">array</span></dt><dd><p>Fourier coefficients of the signal or a second signal</p>
+</dd>
+<dt>m<span class="classifier">int</span></dt><dd><p>Number of windows used for the calculation of one spectrum</p>
+</dd>
+</dl>
+<p>Returns the c4 estimator as matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.calc_a_w3">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">calc_a_w3</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a_w_all</span></em>, <em class="sig-param"><span class="n">f_max_ind</span></em>, <em class="sig-param"><span class="n">m</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.calc_a_w3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preparation of a_(w1+w2) for the calculation of the bispectrum</p>
+<dl class="simple">
+<dt>a_w_all<span class="classifier">array</span></dt><dd><p>Fourier coefficients of the signal</p>
+</dd>
+<dt>f_max_ind<span class="classifier">int</span></dt><dd><p>Index of the maximum frequency to be used for the calculation of the spectra</p>
+</dd>
+<dt>m<span class="classifier">int</span></dt><dd><p>Number of windows per spectrum</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>a_w3<span class="classifier">array</span></dt><dd><p>Matrix of Fourier coefficients</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.calc_window">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">calc_window</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">N_window</span></em>, <em class="sig-param"><span class="n">L</span></em>, <em class="sig-param"><span class="n">sigma_t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.calc_window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to calculate the approx. confined gaussian window as defined in <a class="reference external" href="https://doi.org/10.1016/j.sigpro.2014.03.033">https://doi.org/10.1016/j.sigpro.2014.03.033</a></p>
+<dl class="simple">
+<dt>x<span class="classifier">array</span></dt><dd><p>points at which to calculate the function</p>
+</dd>
+<dt>N_window<span class="classifier">int</span></dt><dd><p>length of window in points</p>
+</dd>
+<dt>L<span class="classifier">int</span></dt><dd><p>N_window + 1</p>
+</dd>
+<dt>sigma_t<span class="classifier">float</span></dt><dd><p>parameter of the approx. confined gaussian window (here chosen to be 0.14)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.cgw">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">cgw</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">N_window</span></em>, <em class="sig-param"><span class="n">fs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ones</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.cgw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to calculate the approx. confined gaussian window as defined in <a class="reference external" href="https://doi.org/10.1016/j.sigpro.2014.03.033">https://doi.org/10.1016/j.sigpro.2014.03.033</a></p>
+<dl class="simple">
+<dt>ones<span class="classifier">bool</span></dt><dd><p>if true, the window is simply set to one resulting in a rectangular window</p>
+</dd>
+<dt>fs<span class="classifier">float</span></dt><dd><p>sampling rate of the signal</p>
+</dd>
+<dt>N_window<span class="classifier">int</span></dt><dd><p>length of window in points</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.connect_broken_axis">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">connect_broken_axis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s_f</span></em>, <em class="sig-param"><span class="n">broken_lims</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.connect_broken_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to enable broken axis during plotting</p>
+<dl class="simple">
+<dt>s_f<span class="classifier">array</span></dt><dd><p>frequencies at with the spectra had been calculated</p>
+</dd>
+<dt>broken_lims<span class="classifier">list</span></dt><dd><p>list of arrays containing the endpoints of the disconnected frequency regions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.find_end_index">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">find_end_index</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">start_index</span></em>, <em class="sig-param"><span class="n">T_window</span></em>, <em class="sig-param"><span class="n">m</span></em>, <em class="sig-param"><span class="n">frame_number</span></em>, <em class="sig-param"><span class="n">j</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.find_end_index" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>data<span class="classifier">array</span></dt><dd><p>timestamps of detector clicks</p>
+</dd>
+<dt>start_index<span class="classifier">int</span></dt><dd><p>index of the last timestamp in the whole dataset that fitted into the prior window (zero in case of first window)</p>
+</dd>
+<dt>T_window<span class="classifier">float</span></dt><dd><p>window length in seconds (or unit of choice)</p>
+</dd>
+<dt>m<span class="classifier">int</span></dt><dd><p>number of windows to calculate the cumulant estimator from</p>
+</dd>
+<dt>frame_number<span class="classifier">int</span></dt><dd><p>keeps track of the current frame (1 frame = m windows)</p>
+</dd>
+<dt>j<span class="classifier">int</span></dt><dd><p>number of the current window in the frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.g">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">g</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x_</span></em>, <em class="sig-param"><span class="n">N_window</span></em>, <em class="sig-param"><span class="n">L</span></em>, <em class="sig-param"><span class="n">sigma_t</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.g" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to calculate the approx. confined gaussian window as defined in <a class="reference external" href="https://doi.org/10.1016/j.sigpro.2014.03.033">https://doi.org/10.1016/j.sigpro.2014.03.033</a></p>
+<dl class="simple">
+<dt><a href="#id1"><span class="problematic" id="id2">x_</span></a><span class="classifier">array</span></dt><dd><p>points at which to calculate the function</p>
+</dd>
+<dt>N_window<span class="classifier">int</span></dt><dd><p>length of window in points</p>
+</dd>
+<dt>L<span class="classifier">int</span></dt><dd><p>N_window + 1</p>
+</dd>
+<dt>sigma_t<span class="classifier">float</span></dt><dd><p>parameter of the approx. confined gaussian window (here chosen to be 0.14)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.import_data">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">import_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">group_key</span></em>, <em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">full_import</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.import_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to load data from h5 file into numpy array.
+Import of .h5 data with format group_key -&gt; data + attrs[dt]</p>
+<dl class="simple">
+<dt>full_import: bool</dt><dd><p>If true all data is loaded in RAM (recommended if possible)</p>
+</dd>
+<dt>path<span class="classifier">str</span></dt><dd><p>Path for the data to be saved at</p>
+</dd>
+<dt>group_key<span class="classifier">str</span></dt><dd><p>Name of the group in the h5 file</p>
+</dd>
+<dt>dataset<span class="classifier">str</span></dt><dd><p>Name of the dataset in the h5 file</p>
+</dd>
+</dl>
+<p>Returns simulation result and inverse sampling rate</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.load_spec">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">load_spec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.load_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to load pickled objects.</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>Path to pkl file.</p>
+</dd>
+</dl>
+<p>Returns the object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.pickle_save">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">pickle_save</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.pickle_save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to pickle system objects</p>
+<dl class="simple">
+<dt>path<span class="classifier">str</span></dt><dd><p>Location of saved data</p>
+</dd>
+</dl>
+<p>obj : System obj</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.plot_first_frame">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">plot_first_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunk</span></em>, <em class="sig-param"><span class="n">delta_t</span></em>, <em class="sig-param"><span class="n">window_size</span></em>, <em class="sig-param"><span class="n">t_unit</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.plot_first_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for plotting one window during the calculation of the spectra for checking data and correct
+window length</p>
+<dl class="simple">
+<dt>chunk<span class="classifier">array</span></dt><dd><p>one frame of the dataset</p>
+</dd>
+<dt>delta_t<span class="classifier">float</span></dt><dd><p>inverse sampling rate of the signal</p>
+</dd>
+<dt>window_size<span class="classifier">int</span></dt><dd><p>size of window in points</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.to_hdf">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">to_hdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">group_name</span></em>, <em class="sig-param"><span class="n">dataset_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.to_hdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to generated h5 file from numpy array.</p>
+<dl class="simple">
+<dt>dt<span class="classifier">float</span></dt><dd><p>Inverse sampling rate of the signal (is saved as attribute “dt” to the dataset)</p>
+</dd>
+<dt>data<span class="classifier">array</span></dt><dd><p>E.g. simulation results</p>
+</dd>
+<dt>path<span class="classifier">str</span></dt><dd><p>Path for the data to be saved at</p>
+</dd>
+<dt>group_name<span class="classifier">str</span></dt><dd><p>Name of the group in the h5 file</p>
+</dd>
+<dt>dataset_name<span class="classifier">str</span></dt><dd><p>Name of the dataset in the h5 file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="src.signalsnap.analysis.unit_conversion">
+<code class="sig-prename descclassname">src.signalsnap.analysis.</code><code class="sig-name descname">unit_conversion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f_unit</span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.signalsnap.analysis.unit_conversion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to automatically convert units.</p>
+<dl class="simple">
+<dt>f_unit<span class="classifier">str</span></dt><dd><p>Frequency unit</p>
+</dd>
+</dl>
+<p>Returns the corresponding time unit.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">signalsnap</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to SignalSnaps’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Markus Sifft, Daniel Hägele.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/code.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

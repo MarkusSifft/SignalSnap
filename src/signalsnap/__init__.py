@@ -32,4 +32,4 @@
 #    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-from SignalSnap.analysis import *
+from signalsnap.analysis import *
