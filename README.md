@@ -26,6 +26,11 @@ SignalSnap is available on `pip` and can be installed with
 pip install signalsnap
 ```
 
+### Installation of Arrayfire
+For GPU calculations the high performance library Arrayfire is used. The Python wrapper ([see here](https://github.com/arrayfire/arrayfire-python)) 
+is automatically installed when installing SignalSnap, however, [ArrayFire C/C++ libraries](https://arrayfire.com/download) need to be installed separately.
+
+
 ## Documentation
 A comprehensive documentation of SignalSnap will follow soon. 
 
