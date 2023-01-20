@@ -33,7 +33,7 @@ Instructioins can be found can be found [here](https://github.com/arrayfire/arra
 
 
 ## Documentation
-A comprehensive documentation of SignalSnap will follow soon. 
+A documentation of SignalSnap's functions can be found [here](docs/index.html). 
 
 ### Examples
 Examples for every function of the package are currently added to the folder Examples. Here are a few lines 
