@@ -1,4 +1,4 @@
-# This file is part of SignalSnap: Signal Analysis In Python Made Easy
+# This file is part of signalsnap: Signal Analysis In Python Made Easy
 #
 #    Copyright (c) 2020 and later, Markus Sifft and Daniel Hägele.
 #    All rights reserved.
@@ -14,7 +14,7 @@
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
 #
-#    3. Neither the name SignalSnap: Signal Analysis In Python Made Easy nor the
+#    3. Neither the name signalsnap: Signal Analysis In Python Made Easy nor the
 #       names of its contributors may be used to endorse or promote products
 #       derived from this software without specific prior written permission.
 #

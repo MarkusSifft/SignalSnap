@@ -23,7 +23,7 @@ Here, a few outstanding features of SignalSnap:
 ## Installation
 SignalSnap is available on `pip` and can be installed with 
 ```bash
-pip install SignalSnap
+pip install signalsnap
 ```
 
 ## Documentation
@@ -34,7 +34,7 @@ Examples for every function of the package are currently added to the folder Exa
 to get you started. We will generate some white noise as signal/dataset store it as Numpy array called `y`.
 
 ```python
-import SignalSnap as snp
+import signalsnap as snp
 import numpy as np
 
 rng = np.random.default_rng()
