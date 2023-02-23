@@ -36,6 +36,7 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import plotly.graph_objects as go
 
 import arrayfire as af
 from arrayfire.arith import conjg as conj
@@ -72,7 +73,6 @@ def pickle_save(path, obj):
 
 
 def load_spec(path):
-
     """
     Helper function to load pickled objects.
 
@@ -1049,7 +1049,7 @@ class Spectrum:
 
                 else:
                     single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (
-                                self.delta_t * (single_window ** order).sum())
+                            self.delta_t * (single_window ** order).sum())
 
             elif order == 3:
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
@@ -1496,7 +1496,7 @@ class Spectrum:
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-            self.delta_t = T_window / N_window_full
+            self.delta_t = T_window / 70 # 70 as defined in function apply_window(...)
 
             self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
 
@@ -1939,3 +1939,149 @@ class Spectrum:
         plt.show()
 
         return fig
+
+    def plot_interactive(self, order, sigma=3, arcsinh_plot=False,
+                         arcsinh_const=0.02, f_unit=None, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
+                         s4_data=None, s4_err=None, s2_f=None, s3_f=None, s4_f=None, imag_plot=False):
+
+        """
+        Method for generating interactive plots. Broken axis are currently not supported.
+
+        Parameters
+        ----------
+        order : int
+            Order of spectrum to be plotted.
+        sigma : float
+            Sets the number of standard deviations as error to be shown in the two-dimensional plots of order 3 and 4.
+            The spectral values are colored green if the number of standard deviations is higher than the specific
+            spectral value.
+        arcsinh_plot : bool
+            if set the spectral values are scale with an arcsinh function (similar to log but also works for negative
+            values). The amount of scaling is given by the arcsinh_const.
+        arcsinh_const : float
+            constant to set amount of arcsinh scaling. The lower, the stronger.
+        f_unit : str or None
+            Frequency unit can be passed labeling the plot. If None, the unit which was set when creating the
+            Spectrum object is used.
+        s2_data : array
+            Spectral data for the power spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s2_err : array
+            Spectral errors for the power spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s3_data : array
+            Spectral data for the third-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s3_err : array
+            Spectral errors for the third-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s4_data : array
+            Spectral data for the fourth-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s4_err : array
+            Spectral errors for the fourth-order spectrum can be provided and is than used instead of the calculated values
+            stored in the object.
+        s2_f : array
+            Frequency values for the power spectrum can be provided and is than used instead of the values
+            stored in the object.
+        s3_f : array
+            Frequency values for the third-order spectrum can be provided and is than used instead of the values
+            stored in the object.
+        s4_f : array
+            Frequency values for the fourth-order spectrum can be provided and is than used instead of the values
+            stored in the object.
+        imag_plot : bool
+            If set imaginary part of the spectral values are plotted.
+
+        Returns
+        -------
+        Returns a plotly figure.
+        """
+
+        if f_unit is None:
+            f_unit = self.f_unit
+
+        s_data_plot = {2: None, 3: None, 4: None}
+        s_err_plot = {2: None, 3: None, 4: None}
+        s_f_plot = {2: None, 3: None, 4: None}
+
+        if order == 2 and self.S[order] is not None and not self.S[order].shape[0] == 0:
+
+            s_data_plot[order], s_err_plot[order] = self.__import_spec_data_for_plotting(s2_data, s2_err, order,
+                                                                                         imag_plot)
+
+            s2_err_p = []
+            s2_err_m = []
+
+            if s_err_plot[order] is not None or self.S_err[2] is not None:
+                s2_err_p.append(s_data_plot[order] + sigma * s_err_plot[order])
+                s2_err_m.append(s_data_plot[order] - sigma * s_err_plot[order])
+
+            if arcsinh_plot:
+                s_data_plot[order], s2_err_p, s2_err_m = arcsinh_scaling(s_data_plot[order], arcsinh_const, order,
+                                                                         s_err_p=s2_err_p, s_err_m=s2_err_m)
+
+            if s2_f is None:
+                s_f_plot[order] = self.freq[2].copy()
+            else:
+                s_f_plot[order] = s2_f
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=s_f_plot[order], y=s_data_plot[order],
+                                     mode='lines',
+                                     name='measurement'))
+            fig.add_trace(go.Scatter(x=s_f_plot[order], y=s2_err_p[0],
+                                     mode='lines',
+                                     name=f'error band ({sigma} sigma)'))
+            fig.add_trace(go.Scatter(x=s_f_plot[order], y=s2_err_m[0],
+                                     mode='lines'))
+            title = r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)"
+            print(title)
+            fig.update_layout(title=title,
+                              xaxis_title=r"$\omega / 2\pi$ (" + f_unit + r")",
+                              yaxis_title=r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)")
+            fig.show()
+
+        if order > 2:
+            if self.S[order] is not None and not self.S[order].shape[0] == 0:
+                print(1)
+                if order == 3:
+                    s_data = s3_data
+                    s_err = s3_err
+                    s_f = s3_f
+                else:  # order 4
+                    s_data = s4_data
+                    s_err = s4_err
+                    s_f = s4_f
+
+                s_data_plot[order], s_err_plot[order] = self.__import_spec_data_for_plotting(s_data, s_err, order,
+                                                                                             imag_plot)
+
+                if s_err_plot[order] is not None or self.S_err[order] is not None:
+                    s_err_plot[order] *= sigma
+
+                if arcsinh_plot:
+                    s_data_plot[order], s_err_plot[order] = arcsinh_scaling(s_data_plot[order], arcsinh_const,
+                                                                            order,
+                                                                            s_err=s_err_plot[order])
+
+                if s_f is None:
+                    s_f_plot[order] = self.freq[order].copy()
+                else:
+                    s_f_plot[order] = s_f
+
+                fig = go.Figure(data=[
+                    go.Surface(x=s_f_plot[order],
+                               y=s_f_plot[order],
+                               z=s_data_plot[order]),
+                    go.Surface(x=s_f_plot[order],
+                               y=s_f_plot[order],
+                               z=s_data_plot[order] + sigma * s_err_plot[order], showscale=False, opacity=0.9),
+                    go.Surface(x=s_f_plot[order],
+                               y=s_f_plot[order],
+                               z=s_data_plot[order] - sigma * s_err_plot[order], showscale=False, opacity=0.9)
+
+                ])
+
+                fig.show()
+                print(2)
