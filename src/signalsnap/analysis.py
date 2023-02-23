@@ -430,6 +430,44 @@ def cgw(N_window, fs=None, ones=False):
     return window / np.sqrt(norm), norm
 
 
+def calc_single_window(window_width, fs, sigma_t=0.14):
+    """
+        Return a single example of the window function for normalization purposes.
+
+        Parameters
+        ----------
+        window_width : float
+            timely width of the window in unit of choice
+        fs : float
+            sampling rate of the signal
+        sigma_t : float
+            parameter of the approx. confined gaussian window (here chosen to be 0.14)
+
+        Returns
+        -------
+
+        """
+
+    # ----- Calculation of g_k -------
+
+    dt = 1 / fs
+
+    N_window = window_width / dt
+    L = N_window + 1
+
+    # if ones:
+    #    window = np.ones(N_window)
+
+    # ------ Normalizing by calculating full window with given resolution ------
+
+    N_window_full = 70
+    dt_full = window_width / N_window_full
+
+    # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
+    window_full, norm = cgw(N_window_full, 1 / dt_full)
+
+    return window_full, N_window_full
+
 @njit
 def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
     """
@@ -454,12 +492,14 @@ def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
 
     # ----- Calculation of g_k -------
 
+    # TODO Hier gibts es auf jeden Fall Sachen, die nur einmal außerhalb dieser Funktion berechnet
+    # werden könnten
     dt = 1 / fs
-    x = t_clicks / dt
 
     N_window = window_width / dt
     L = N_window + 1
 
+    x = t_clicks / dt
     window = calc_window(x, N_window, L, sigma_t)
     # if ones:
     #    window = np.ones(N_window)
@@ -1458,6 +1498,9 @@ class Spectrum:
 
         self.__prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
 
+        single_window, N_window_full = calc_single_window(T_window / scale_t,
+                                                                       1 / self.delta_t,
+                                                                       sigma_t=sigma_t)
         for frame_number in tqdm_notebook(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
@@ -1496,7 +1539,7 @@ class Spectrum:
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-            self.delta_t = T_window / 70 # 70 as defined in function apply_window(...)
+            self.delta_t = T_window / N_window_full # 70 as defined in function apply_window(...)
 
             self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
 
@@ -1771,7 +1814,7 @@ class Spectrum:
         for axis, order in enumerate(order_in):
 
             # -------- S2 ---------
-            if order == 2 and self.S[order] is not None and not self.S[order].shape[0] == 0:
+            if order == 2 and ((self.S[order] is not None and not self.S[order].shape[0] == 0) or s2_data is not None):
                 s_data_plot[order], s_err_plot[order] = self.__import_spec_data_for_plotting(s2_data, s2_err, order,
                                                                                              imag_plot)
 
