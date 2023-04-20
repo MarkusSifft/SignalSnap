@@ -1,5 +1,5 @@
 # SignalSnap: Signal Analysis In Python Made Easy 
-by M. Sifft and D. Hägele
+by M. Sifft, A. Ghorbanietemad and D. Hägele
 
 We present a fast Python toolbox for higher-order spectral analysis of time series. The usual second-order 
 power spectrum and its higher-order generalization - so-called bi- and trispectra - are efficiently calculated 
