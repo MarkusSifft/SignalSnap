@@ -116,37 +116,6 @@ def to_hdf(dt, data, path, group_name, dataset_name):
         d.attrs['dt'] = dt
 
 
-def import_data(path, group_key, dataset, full_import=False):
-    """
-    Helper function to load data from h5 file into numpy array.
-    Import of .h5 data with format group_key -> data + attrs[dt]
-
-    Parameters
-    ----------
-    full_import: bool
-        If true all data is loaded in RAM (recommended if possible)
-    path : str
-        Path for the data to be saved at
-    group_key : str
-        Name of the group in the h5 file
-    dataset : str
-        Name of the dataset in the h5 file
-
-    Returns
-    -------
-    Returns simulation result and inverse sampling rate
-    """
-
-    main = h5py.File(path, 'r')
-    main_group = main[group_key]
-    main_data = main_group[dataset]
-    delta_t = main_data.attrs['dt']
-    if full_import:
-        return main_data[()], delta_t
-    else:
-        return main_data, delta_t
-
-
 @njit(parallel=False)
 def calc_a_w3(a_w_all, f_max_ind, m):
     """
@@ -794,6 +763,40 @@ class Spectrum:
         self.f_unit = f_unit
         self.t_unit = unit_conversion(f_unit)
 
+    def import_data(self, path, group_key, dataset, full_import=False):
+        """
+        Helper function to load data from h5 file into numpy array.
+        Import of .h5 data with format group_key -> data + attrs[dt]
+
+        Parameters
+        ----------
+        full_import: bool
+            If true all data is loaded in RAM (recommended if possible)
+        path : str
+            Path for the data to be saved at
+        group_key : str
+            Name of the group in the h5 file
+        dataset : str
+            Name of the dataset in the h5 file
+
+        Returns
+        -------
+        Returns simulation result and inverse sampling rate
+        """
+
+        main = h5py.File(path, 'r')
+        if group_key == '':
+            main_data = main[dataset]
+        else:
+            main_group = main[group_key]
+            main_data = main_group[dataset]
+        if self.delta_t is None:
+            self.delta_t = main_data.attrs['dt']
+        if full_import:
+            return main_data[()]
+        else:
+            return main_data
+
     def save_spec(self, path):
         """
         Method for storing the Spectrum object. Pointers and the full dataset are remove from the object before saving.
@@ -1326,7 +1329,7 @@ class Spectrum:
 
         # -------data setup---------
         if self.data is None:
-            self.data, self.delta_t = import_data(self.path, self.group_key, self.dataset, full_import=full_import)
+            self.data = self.import_data(self.path, self.group_key, self.dataset, full_import=full_import)
         if self.delta_t is None:
             raise MissingValueError('Missing value for delta_t')
 
@@ -1340,7 +1343,7 @@ class Spectrum:
         self.window_points = window_points
 
         if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
-            corr_data, _ = import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
+            corr_data = self.import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
                                        full_import=full_import)
         elif self.corr_data is not None:
             corr_data = self.corr_data
@@ -1469,7 +1472,7 @@ class Spectrum:
 
         # -------data setup---------
         if self.data is None:
-            self.data, self.delta_t = import_data(self.path, self.group_key, self.dataset, full_import=full_import)
+            self.data = self.import_data(self.path, self.group_key, self.dataset, full_import=full_import)
         if self.delta_t is None:
             raise MissingValueError('Missing value for delta_t')
 
@@ -1593,7 +1596,7 @@ class Spectrum:
 
         # -------data setup---------
         if self.data is None:
-            self.data, self.delta_t = import_data(self.path, self.group_key, self.dataset)
+            self.data = self.import_data(self.path, self.group_key, self.dataset)
         if self.delta_t is None:
             raise MissingValueError('Missing value for delta_t')
 
