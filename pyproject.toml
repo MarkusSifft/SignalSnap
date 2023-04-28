@@ -28,7 +28,8 @@ dependencies = [
  "arrayfire",
  "numba",
  "scipy",
- "tqdm"
+ "tqdm",
+ "plotly"
 ]
 
 [project.urls]
