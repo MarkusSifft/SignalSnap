@@ -48,7 +48,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from numba import njit
 from scipy.fft import rfftfreq
 from scipy.ndimage.filters import gaussian_filter
-from tqdm import tqdm_notebook
+from tqdm.autonotebook import tqdm
 
 
 class MissingValueError(Exception):
@@ -1369,7 +1369,7 @@ class Spectrum:
 
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
 
-        for i in tqdm_notebook(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
+        for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
 
@@ -1504,7 +1504,7 @@ class Spectrum:
         single_window, N_window_full = calc_single_window(T_window / scale_t,
                                                                        1 / self.delta_t,
                                                                        sigma_t=sigma_t)
-        for frame_number in tqdm_notebook(range(n_windows)):
+        for frame_number in tqdm(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
                                                                                   T_window / scale_t, frame_number,
@@ -1623,7 +1623,7 @@ class Spectrum:
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((bins, 1, m), order='F'))
 
         print('calculating spectrum')
-        for frame_number in tqdm_notebook(range(n_windows)):
+        for frame_number in tqdm(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index, T_window,
                                                                                   frame_number, enough_data)
