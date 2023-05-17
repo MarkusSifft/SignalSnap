@@ -1,7 +1,6 @@
-# This file is part of QuantumPolyspectra: a Python Package for the
-# Analysis and Simulation of Quantum Measurements
+# This file is part of signalsnap: Signal Analysis In Python Made Easy
 #
-#    Copyright (c) 2011 and later, Paul D. Nation and Robert J. Johansson.
+#    Copyright (c) 2020 and later, Markus Sifft and Daniel Hägele.
 #    All rights reserved.
 #
 #    Redistribution and use in source and binary forms, with or without
@@ -15,9 +14,9 @@
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
 #
-#    3. Neither the name of the QuTiP: Quantum Toolbox in Python nor the names
-#       of its contributors may be used to endorse or promote products derived
-#       from this software without specific prior written permission.
+#    3. Neither the name signalsnap: Signal Analysis In Python Made Easy nor the
+#       names of its contributors may be used to endorse or promote products
+#       derived from this software without specific prior written permission.
 #
 #    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 #    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
