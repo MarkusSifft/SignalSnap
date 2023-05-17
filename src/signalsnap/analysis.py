@@ -48,7 +48,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from numba import njit
 from scipy.fft import rfftfreq
 from scipy.ndimage.filters import gaussian_filter
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 
 
 class MissingValueError(Exception):
