@@ -1920,13 +1920,8 @@ class Spectrum:
                         diffs = None
                         broken_lims_scaled = None
 
-                    vmin = np.min(s_data_plot[order])
-                    vmax = np.max(s_data_plot[order])
-                    if vmin > 0:
-                        vmin = -vmax / 20
-                    if vmax < 0:
-                        vmax = -vmin / 20
-                    norm = colors.TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+                    abs_max = max(abs(s_data_plot[order].min()), abs(s_data_plot[order].max()))
+                    norm = colors.TwoSlopeNorm(vmin=-abs_max, vcenter=0, vmax=abs_max)
                     # norm = MidpointNormalize(midpoint=0, vmin=vmin, vmax=vmax)
 
                     y, x = np.meshgrid(s_f_plot[order], s_f_plot[order])
