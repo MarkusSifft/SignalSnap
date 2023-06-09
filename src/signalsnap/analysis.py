@@ -1474,7 +1474,7 @@ class Spectrum:
         if self.data is None:
             self.data = self.import_data(self.path, self.group_key, self.dataset, full_import=full_import)
         if self.delta_t is None:
-            raise MissingValueError('Missing value for delta_t')
+            self.delta_t = 1
 
         n_chunks = 0
         self.T_window = T_window
@@ -1930,7 +1930,7 @@ class Spectrum:
                     if s_err_plot[order] is not None or self.S_err[order] is not None:
                         err_matrix[np.abs(s_data_plot[order]) < s_err_plot[order]] = 1
 
-                    c = ax[axis].pcolormesh(x, y, z, cmap=cmap, norm=norm, zorder=1, shading='auto')
+                    c = ax[axis].pcolormesh(x, y, gaussian_filter(z, s_filter), cmap=cmap, norm=norm, zorder=1, shading='auto')
                     if s_err_plot[order] is not None or self.S_err[order] is not None:
                         ax[axis].pcolormesh(x, y, err_matrix, cmap=cmap_sigma, vmin=0, vmax=1, shading='auto')
 
