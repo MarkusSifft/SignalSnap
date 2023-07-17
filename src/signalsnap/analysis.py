@@ -1098,6 +1098,8 @@ class Spectrum:
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
+                print(a_w.to_ndarray())
+                print(single_window[0].to_ndarray())
                 single_spectrum = c1(a_w) / (self.delta_t * single_window[0])
 
             elif order == 2:
