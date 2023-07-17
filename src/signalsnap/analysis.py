@@ -746,19 +746,19 @@ class Spectrum:
         self.f_max = 0
         self.fs = None
         self.f_lists = {2: None, 3: None, 4: None}
-        self.S = {2: None, 3: None, 4: None}
-        self.S_gpu = {2: None, 3: None, 4: None}
-        self.S_err = {2: None, 3: None, 4: None}
-        self.S_err_gpu = {2: None, 3: None, 4: None}
-        self.S_errs = {2: [], 3: [], 4: []}
-        self.S_stationarity_temp = {2: None, 3: None, 4: None}
-        self.S_stationarity = {2: [], 3: [], 4: []}
+        self.S = {1: None, 2: None, 3: None, 4: None}
+        self.S_gpu = {1: None, 2: None, 3: None, 4: None}
+        self.S_err = {1: None, 2: None, 3: None, 4: None}
+        self.S_err_gpu = {1: None, 2: None, 3: None, 4: None}
+        self.S_errs = {1: None, 2: [], 3: [], 4: []}
+        self.S_stationarity_temp = {1: None, 2: None, 3: None, 4: None}
+        self.S_stationarity = {1: [], 2: [], 3: [], 4: []}
         self.group_key = group_key
         self.dataset = dataset
         self.window_points = None
-        self.m = {2: None, 3: None, 4: None}
-        self.m_var = {2: None, 3: None, 4: None}
-        self.m_stationarity = {2: None, 3: None, 4: None}
+        self.m = {1: None, 2: None, 3: None, 4: None}
+        self.m_var = {1: None, 2: None, 3: None, 4: None}
+        self.m_stationarity = {1: None, 2: None, 3: None, 4: None}
         self.first_frame_plotted = False
         self.delta_t = delta_t
         self.data = data
@@ -767,8 +767,8 @@ class Spectrum:
         self.corr_group_key = corr_group_key
         self.corr_dataset = corr_dataset
         self.main_data = None
-        self.err_counter = {2: 0, 3: 0, 4: 0}
-        self.stationarity_counter = {2: 0, 3: 0, 4: 0}
+        self.err_counter = {1: 0, 2: 0, 3: 0, 4: 0}
+        self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         self.f_unit = f_unit
         self.t_unit = unit_conversion(f_unit)
 
@@ -952,28 +952,34 @@ class Spectrum:
         else:
             self.S_gpu[order] += single_spectrum
 
-        if order == 2:
+        if order == 1:
+            self.S_errs[order][0, self.err_counter[order]] = single_spectrum
+        elif order == 2:
             self.S_errs[order][:, self.err_counter[order]] = single_spectrum
         else:
             self.S_errs[order][:, :, self.err_counter[order]] = single_spectrum
         self.err_counter[order] += 1
 
         if m_stationarity is not None:
-            if order == 2:
+            if order == 1:
+                self.S_stationarity_temp[order][0, self.stationarity_counter[order]] = single_spectrum
+            elif order == 2:
                 self.S_stationarity_temp[order][:, self.stationarity_counter[order]] = single_spectrum
             else:
                 self.S_stationarity_temp[order][:, :, self.stationarity_counter[order]] = single_spectrum
             self.stationarity_counter[order] += 1
 
             if self.stationarity_counter[order] % m_stationarity == 0:
-                if order == 2:
+                if order == 1:
+                    self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
+                elif order == 2:
                     self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
                 else:
                     self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=2).to_ndarray())
                 self.stationarity_counter[order] = 0
 
         if self.err_counter[order] % m_var == 0:
-            if order == 2:
+            if order == 1 or order == 2:
                 dim = 1
             else:
                 dim = 2
@@ -1157,7 +1163,9 @@ class Spectrum:
             else:
                 self.freq[order] = f_all_in
 
-            if order == 2:
+            if order == 1:
+                self.S_errs[1] = to_gpu(1j * np.empty((1, m_var)))
+            elif order == 2:
                 self.S_errs[2] = to_gpu(1j * np.empty((f_max_ind, m_var)))
             elif order == 3:
                 self.S_errs[3] = to_gpu(1j * np.empty((f_max_ind // 2, f_max_ind // 2, m_var)))
@@ -1165,14 +1173,16 @@ class Spectrum:
                 self.S_errs[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_var)))
 
             if m_stationarity is not None:
-                if order == 2:
+                if order == 1:
+                    self.S_stationarity_temp[1] = to_gpu(1j * np.empty((1, m_stationarity)))
+                elif order == 2:
                     self.S_stationarity_temp[2] = to_gpu(1j * np.empty((f_max_ind, m_stationarity)))
                 elif order == 3:
                     self.S_stationarity_temp[3] = to_gpu(
                         1j * np.empty((f_max_ind // 2, f_max_ind // 2, m_stationarity)))
                 elif order == 4:
                     self.S_stationarity_temp[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_stationarity)))
-        print('Number of points: ' + str(len(self.freq[orders[0]])))
+        print('Number of points: ' + str(len(self.freq[2])))
 
     def __reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
         """
@@ -1195,8 +1205,8 @@ class Spectrum:
         -------
 
         """
-        self.err_counter = {2: 0, 3: 0, 4: 0}
-        self.stationarity_counter = {2: 0, 3: 0, 4: 0}
+        self.err_counter = {1: 0, 2: 0, 3: 0, 4: 0}
+        self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         for order in orders:
             self.f_lists[order] = f_lists
             self.m[order] = m
@@ -1334,7 +1344,7 @@ class Spectrum:
         af.set_backend(backend)
 
         if order_in == 'all':
-            orders = [2, 3, 4]
+            orders = [1, 2, 3, 4]
         else:
             orders = order_in
 
@@ -1477,7 +1487,7 @@ class Spectrum:
         af.set_backend(backend)
 
         if order_in == 'all':
-            orders = [2, 3, 4]
+            orders = [1, 2, 3, 4]
         else:
             orders = order_in
 
@@ -1568,7 +1578,7 @@ class Spectrum:
     def calc_spec_mini_bins(self, order_in, T_window, T_bin, f_max, backend='opencl', coherent=False,
                             m=10, m_var=10, m_stationarity=None, rect_win=False, verbose=False):
         """
-
+        DEPRECIATED FUNCTION
         Parameters
         ----------
         order_in: array of int, str ('all')
