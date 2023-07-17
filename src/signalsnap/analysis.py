@@ -142,6 +142,14 @@ def calc_a_w3(a_w_all, f_max_ind, m):
     return a_w3.conj()
 
 
+def c1(a_w):
+    """calculation of c1 / mean """
+    # C_1 = < a_w >
+    s1 = mean(a_w, dim=2)
+
+    return s1[0]
+
+
 def c2(a_w, a_w_corr, m, coherent):
     """calculation of c2 for power spectrum"""
     # ---------calculate spectrum-----------
@@ -436,6 +444,7 @@ def calc_single_window(window_width, fs, sigma_t=0.14):
     window_full, norm = cgw(N_window_full, 1 / dt_full)
 
     return window_full, N_window_full
+
 
 @njit
 def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
@@ -1048,12 +1057,12 @@ class Spectrum:
                                     coherent=False, random_phase=False,
                                     window_points=None):
         """
-        Helper function to calculate the (2,3,4)-order cumulant from the Fourier coefficients of the m windows in
+        Helper function to calculate the (1,2,3,4)-order cumulant from the Fourier coefficients of the m windows in
         one frame.
 
         Parameters
         ----------
-        orders : {2,3,4}
+        orders : {1,2,3,4}
             Orders of the spectra to be calculated.
         a_w_all_gpu : array
             A matrix containing the Fourier coefficients of m windows.
@@ -1081,7 +1090,11 @@ class Spectrum:
         """
 
         for order in orders:
-            if order == 2:
+            if order == 1:
+                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
+                single_spectrum = c1(a_w) / (self.delta_t * single_window[0])
+
+            elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
 
                 if self.corr_data is not None:
@@ -1344,7 +1357,7 @@ class Spectrum:
 
         if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
             corr_data = self.import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
-                                       full_import=full_import)
+                                         full_import=full_import)
         elif self.corr_data is not None:
             corr_data = self.corr_data
         else:
@@ -1502,8 +1515,8 @@ class Spectrum:
         self.__prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
 
         single_window, N_window_full = calc_single_window(T_window / scale_t,
-                                                                       1 / self.delta_t,
-                                                                       sigma_t=sigma_t)
+                                                          1 / self.delta_t,
+                                                          sigma_t=sigma_t)
         for frame_number in tqdm(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
@@ -1542,7 +1555,7 @@ class Spectrum:
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-            self.delta_t = T_window / N_window_full # 70 as defined in function apply_window(...)
+            self.delta_t = T_window / N_window_full  # 70 as defined in function apply_window(...)
 
             self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
 
@@ -1930,7 +1943,8 @@ class Spectrum:
                     if s_err_plot[order] is not None or self.S_err[order] is not None:
                         err_matrix[np.abs(s_data_plot[order]) < s_err_plot[order]] = 1
 
-                    c = ax[axis].pcolormesh(x, y, gaussian_filter(z, s_filter), cmap=cmap, norm=norm, zorder=1, shading='auto')
+                    c = ax[axis].pcolormesh(x, y, gaussian_filter(z, s_filter), cmap=cmap, norm=norm, zorder=1,
+                                            shading='auto')
                     if s_err_plot[order] is not None or self.S_err[order] is not None:
                         ax[axis].pcolormesh(x, y, err_matrix, cmap=cmap_sigma, vmin=0, vmax=1, shading='auto')
 
