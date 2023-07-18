@@ -1395,7 +1395,6 @@ class Spectrum:
         for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
-            print('chunk mean:', chunk.mean())
             if not self.first_frame_plotted and show_first_frame:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
