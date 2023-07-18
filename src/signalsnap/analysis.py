@@ -1098,9 +1098,8 @@ class Spectrum:
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
-                print(c1(a_w).to_ndarray())
-                print(single_window[0].to_ndarray())
-                single_spectrum = c1(a_w) / (self.delta_t * single_window[0])
+                single_spectrum = c1(a_w) / single_window.mean() / single_window.shape[0]
+                single_spectrum = af.real(single_spectrum)
 
             elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
@@ -1397,7 +1396,7 @@ class Spectrum:
         for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
-
+            print('chunk mean:', chunk.mean())
             if not self.first_frame_plotted and show_first_frame:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
