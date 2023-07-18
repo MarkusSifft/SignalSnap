@@ -1099,7 +1099,6 @@ class Spectrum:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
                 single_spectrum = c1(a_w) / single_window.mean() / single_window.shape[0]
-                single_spectrum = af.real(single_spectrum)
 
             elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
