@@ -1098,7 +1098,7 @@ class Spectrum:
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
-                single_spectrum = c1(a_w) / single_window.mean() / single_window.shape[0]
+                single_spectrum = c1(a_w) / self.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
@@ -1182,7 +1182,9 @@ class Spectrum:
                         1j * np.empty((f_max_ind // 2, f_max_ind // 2, m_stationarity)))
                 elif order == 4:
                     self.S_stationarity_temp[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_stationarity)))
-        print('Number of points: ' + str(len(self.freq[2])))
+
+        if not 1 in orders or not len(orders) == 1:
+            print('Number of points: ' + str(len(self.freq[2])))
 
     def __reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
         """
@@ -1289,12 +1291,12 @@ class Spectrum:
                   rect_win=False, full_import=True, show_first_frame=True):
 
         """
-        Calculation of spectra of orders 2 to 4 with the arrayfire library.
+        Calculation of spectra of orders 1 to 4 with the arrayfire library.
 
         Parameters
         ----------
         order_in: array of int, str ('all')
-            orders of the spectra to be calculated, e.g., [2,4]
+            orders of the spectra to be calculated, e.g., [1,4]
         T_window: int
             Spectra for m windows with temporal length T_window are calculated.
         f_max: float
