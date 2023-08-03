@@ -1637,6 +1637,7 @@ class Spectrum:
                     print('a_w_all_gpu',a_w_all_gpu.dtype())
 
                     temp2 = t_clicks_windowed_gpu * exp_random_numbers_gpu
+                    af.matmul(temp1, temp2)
 
                     #a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers_gpu)
 
