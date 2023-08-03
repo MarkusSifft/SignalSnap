@@ -1631,10 +1631,10 @@ class Spectrum:
                     exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
                     exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
 
-                    print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype())
-                    print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype())
-                    print('temp1', temp1.dtype())
-                    print('a_w_all_gpu',a_w_all_gpu.dtype())
+                    print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype(), t_clicks_windowed_gpu.shape)
+                    print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype(), t_clicks_windowed_gpu.shape)
+                    print('temp1', temp1.dtype(), temp1.shape)
+                    print('a_w_all_gpu',a_w_all_gpu.dtype(), a_w_all_gpu.shape)
 
                     #temp2 = t_clicks_windowed_gpu * exp_random_numbers_gpu
                     #af.matmul(temp1, temp2)
