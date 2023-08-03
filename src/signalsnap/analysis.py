@@ -1401,9 +1401,8 @@ class Spectrum:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
 
-            print(2)
             chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
-            print(3)
+
             if corr_default == 'white_noise':  # use white noise to check for false correlations
                 chunk_corr = np.random.randn(window_points, 1, m)
                 chunk_corr_gpu = to_gpu(chunk_corr)
@@ -1585,21 +1584,17 @@ class Spectrum:
                                                           sigma_t=sigma_t)
         for frame_number in tqdm(range(n_windows)):
 
-            print('1')
-
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
                                                                                   T_window / scale_t, frame_number,
                                                                                   enough_data)
             if not enough_data:
                 break
 
-            print(1.5)
             n_chunks += 1
 
             a_w_all = 1j * np.ones((w_list.shape[0], m))
             a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, m), order='F'))
 
-            print(1.7)
             for i, t_clicks in enumerate(windows):
 
                 if t_clicks is not None:
@@ -1615,7 +1610,6 @@ class Spectrum:
                                                                                        sigma_t=sigma_t)
 
                     # ------ GPU --------
-                    print(2)
                     t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start * scale_t)
                     t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
 
@@ -1627,19 +1621,9 @@ class Spectrum:
                     # a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     # ------- exponentially weighted clicks -------
-                    print(3)
                     exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
                     exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
-
-                    print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype(), t_clicks_windowed_gpu.shape)
-                    print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype(), t_clicks_windowed_gpu.shape)
-                    print('temp1', temp1.dtype(), temp1.shape)
-                    print('a_w_all_gpu',a_w_all_gpu.dtype(), a_w_all_gpu.shape)
-
-                    temp2 = t_clicks_windowed_gpu * exp_random_numbers_gpu
-                    temp3 = af.matmul(temp1, temp2)
-
-                    a_w_all_gpu[:, 0, i] = temp3
+                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers_gpu)
 
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
