@@ -1384,6 +1384,7 @@ class Spectrum:
         freq_all_freq = rfftfreq(int(window_points), self.delta_t)
         if verbose:
             print('Maximum frequency:', np.max(freq_all_freq))
+            print(1)
 
         # ------ Check if f_max is too high ---------
         f_mask = freq_all_freq <= f_max
