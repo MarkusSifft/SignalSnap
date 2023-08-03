@@ -1384,7 +1384,6 @@ class Spectrum:
         freq_all_freq = rfftfreq(int(window_points), self.delta_t)
         if verbose:
             print('Maximum frequency:', np.max(freq_all_freq))
-            print('lkifjkwjlsnflwnj')
 
         # ------ Check if f_max is too high ---------
         f_mask = freq_all_freq <= f_max
@@ -1397,7 +1396,6 @@ class Spectrum:
 
         for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
-            print(1)
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
             if not self.first_frame_plotted and show_first_frame:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
@@ -1626,18 +1624,18 @@ class Spectrum:
                     # a_w_all_gpu[:, 0, i] = af.sum(temp1 * temp2, dim=1)
 
                     # ------- uniformly weighted clicks -------
-                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
+                    #a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     # ------- exponentially weighted clicks -------
-                    #print(3)
-                    #exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
-                    #exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
+                    print(3)
+                    exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
+                    exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
 
-                    #print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype())
-                    #print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype())
-                    #print('temp1', temp1.dtype())
+                    print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype())
+                    print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype())
+                    print('temp1', temp1.dtype())
 
-                    #a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers_gpu)
+                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers_gpu)
 
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
