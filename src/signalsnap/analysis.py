@@ -1583,16 +1583,21 @@ class Spectrum:
                                                           sigma_t=sigma_t)
         for frame_number in tqdm(range(n_windows)):
 
+            print(1)
+
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
                                                                                   T_window / scale_t, frame_number,
                                                                                   enough_data)
             if not enough_data:
                 break
 
+            print(1.5)
             n_chunks += 1
 
             a_w_all = 1j * np.empty((w_list.shape[0], m))
             a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, m), order='F'))
+
+            print(1.7)
             for i, t_clicks in enumerate(windows):
 
                 if t_clicks is not None:
