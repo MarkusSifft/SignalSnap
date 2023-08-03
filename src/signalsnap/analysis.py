@@ -1629,7 +1629,7 @@ class Spectrum:
                     # ------- exponentially weighted clicks -------
                     print(3)
                     exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
-                    #exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
+                    exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
 
                     #print('exp_random_numbers_gpu', exp_random_numbers_gpu.dtype())
                     #print('t_clicks_windowed_gpu', t_clicks_windowed_gpu.dtype())
