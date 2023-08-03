@@ -136,7 +136,7 @@ def calc_a_w3(a_w_all, f_max_ind, m):
         Matrix of Fourier coefficients
     """
 
-    a_w3 = 1j * np.empty((f_max_ind // 2, f_max_ind // 2, m))
+    a_w3 = 1j * np.ones((f_max_ind // 2, f_max_ind // 2, m))
     for i in range(f_max_ind // 2):
         a_w3[i, :, :] = a_w_all[i:i + f_max_ind // 2, 0, :]
     return a_w3.conj()
@@ -1164,24 +1164,24 @@ class Spectrum:
                 self.freq[order] = f_all_in
 
             if order == 1:
-                self.S_errs[1] = to_gpu(1j * np.empty((1, m_var)))
+                self.S_errs[1] = to_gpu(1j * np.ones((1, m_var)))
             elif order == 2:
-                self.S_errs[2] = to_gpu(1j * np.empty((f_max_ind, m_var)))
+                self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, m_var)))
             elif order == 3:
-                self.S_errs[3] = to_gpu(1j * np.empty((f_max_ind // 2, f_max_ind // 2, m_var)))
+                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, m_var)))
             elif order == 4:
-                self.S_errs[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_var)))
+                self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, m_var)))
 
             if m_stationarity is not None:
                 if order == 1:
-                    self.S_stationarity_temp[1] = to_gpu(1j * np.empty((1, m_stationarity)))
+                    self.S_stationarity_temp[1] = to_gpu(1j * np.ones((1, m_stationarity)))
                 elif order == 2:
-                    self.S_stationarity_temp[2] = to_gpu(1j * np.empty((f_max_ind, m_stationarity)))
+                    self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, m_stationarity)))
                 elif order == 3:
                     self.S_stationarity_temp[3] = to_gpu(
-                        1j * np.empty((f_max_ind // 2, f_max_ind // 2, m_stationarity)))
+                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, m_stationarity)))
                 elif order == 4:
-                    self.S_stationarity_temp[4] = to_gpu(1j * np.empty((f_max_ind, f_max_ind, m_stationarity)))
+                    self.S_stationarity_temp[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, m_stationarity)))
 
         if not 1 in orders or not len(orders) == 1:
             print('Number of points: ' + str(len(self.freq[2])))
@@ -1596,7 +1596,7 @@ class Spectrum:
             print(1.5)
             n_chunks += 1
 
-            a_w_all = 1j * np.empty((w_list.shape[0], m))
+            a_w_all = 1j * np.ones((w_list.shape[0], m))
             a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, m), order='F'))
 
             print(1.7)
@@ -1733,7 +1733,7 @@ class Spectrum:
                 break
 
             n_chunks += 1
-            chunks = np.empty((bins, m))
+            chunks = np.ones((bins, m))
 
             for i, t_clicks in enumerate(windows):
                 t_clicks_minus_start = t_clicks - i * T_window - m * T_window * frame_number
