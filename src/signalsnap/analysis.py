@@ -1608,6 +1608,7 @@ class Spectrum:
                                                                                        sigma_t=sigma_t)
 
                     # ------ GPU --------
+                    print(2)
                     t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start * scale_t)
                     t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
 
@@ -1619,6 +1620,7 @@ class Spectrum:
                     # a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     # ------- exponentially weighted clicks -------
+                    print(3)
                     exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
                     exp_random_numbers_gpu = to_gpu(exp_random_numbers).as_type(af.Dtype.c64)
 
