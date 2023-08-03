@@ -1624,7 +1624,7 @@ class Spectrum:
                     # a_w_all_gpu[:, 0, i] = af.sum(temp1 * temp2, dim=1)
 
                     # ------- uniformly weighted clicks -------
-                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
+                    # a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     # ------- exponentially weighted clicks -------
                     print(3)
@@ -1639,7 +1639,7 @@ class Spectrum:
                     temp2 = t_clicks_windowed_gpu * exp_random_numbers_gpu
                     temp3 = af.matmul(temp1, temp2)
 
-                    #a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers_gpu)
+                    a_w_all_gpu[:, 0, i] = temp3
 
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
