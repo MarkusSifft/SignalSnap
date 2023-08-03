@@ -1449,9 +1449,62 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson(self, order_in, T_window, f_max, f_lists=None, backend='opencl', m=10, m_var=10,
+    def calc_spec_poisson(self, order_in, T_window, f_max, n_reps=10, f_lists=None, backend='opencl', m=10, m_var=10,
                           m_stationarity=None, full_import=False, scale_t=1,
                           sigma_t=0.14, rect_win=False):
+        """
+        Function calculates n_reps spectra using the poisson method and averages over them.
+
+        Parameters
+        ----------
+        order_in: array of int, str ('all')
+            orders of the spectra to be calculated, e.g., [2,4]
+        T_window: int
+            spectra for m windows of window_points is calculated
+        f_max: float
+            maximum frequency of the spectra to be calculated
+        f_lists: list of arrays
+            frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps)
+        backend: str
+            backend for arrayfire
+        m: int
+            spectra for m windows of window_points is calculated
+        m_var: int
+            number of spectra to calculate the variance from (should be set as high as possible)
+        m_stationarity: int
+            number of spectra after which their mean is stored to varify stationarity of the data
+        full_import: bool
+            whether to load all data into RAM (should be set true if possible)
+        scale_t: float
+            scaling factor to scale timestamps and dt (not yet implemented, due to type error)
+        sigma_t: float
+            width of approximate confined gaussian windows
+        rect_win: bool
+            if true no window function will be applied to the window
+        Returns
+        -------
+
+        """
+        all_S = []
+        all_S_err = []
+
+        for i in range(n_reps):
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, T_window, f_max, f_lists=f_lists, backend=backend,
+                                                             m=m, m_var=m_var, m_stationarity=m_stationarity, full_import=full_import,
+                                                             scale_t=scale_t, sigma_t=sigma_t, rect_win=rect_win)
+
+            all_S.append(S)
+            all_S_err.append(S_err)
+
+        for i in range(1, 5):
+            self.S[i] = sum([S[i] for S in all_S]) / n_reps
+            self.S_err[i] = sum([S_err[i]**2 for S_err in all_S_err]) / n_reps
+
+        return self.freq, self.S, self.S_err
+
+    def calc_spec_poisson_one_spectrum(self, order_in, T_window, f_max, f_lists=None, backend='opencl', m=10, m_var=10,
+                                       m_stationarity=None, full_import=False, scale_t=1,
+                                       sigma_t=0.14, rect_win=False):
         """
 
         Parameters
@@ -1561,7 +1614,13 @@ class Spectrum:
                     temp1 = af.exp(1j * af.matmulNT(w_list_gpu, t_clicks_minus_start_gpu))
                     # temp2 = af.tile(t_clicks_windowed_gpu.T, w_list_gpu.shape[0])
                     # a_w_all_gpu[:, 0, i] = af.sum(temp1 * temp2, dim=1)
+
+                    # ------- uniformly weighted clicks -------
                     a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
+
+                    # ------- exponentially weighted clicks -------
+                    exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
+                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu * exp_random_numbers)
 
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
