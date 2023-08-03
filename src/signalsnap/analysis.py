@@ -1396,12 +1396,15 @@ class Spectrum:
 
         for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
 
+            print(1)
             chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
             if not self.first_frame_plotted and show_first_frame:
                 plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
                 self.first_frame_plotted = True
 
+            print(2)
             chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
+            print(3)
             if corr_default == 'white_noise':  # use white noise to check for false correlations
                 chunk_corr = np.random.randn(window_points, 1, m)
                 chunk_corr_gpu = to_gpu(chunk_corr)
