@@ -1583,7 +1583,7 @@ class Spectrum:
                                                           sigma_t=sigma_t)
         for frame_number in tqdm(range(n_windows)):
 
-            print(1)
+            print('1')
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
                                                                                   T_window / scale_t, frame_number,
