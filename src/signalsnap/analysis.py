@@ -1497,7 +1497,7 @@ class Spectrum:
             all_S.append(S)
             all_S_err.append(S_err)
 
-        for i in range(1, 5):
+        for i in order_in:
             self.S[i] = sum([S[i] for S in all_S]) / n_reps
             self.S_err[i] = sum([S_err[i] for S_err in all_S_err]) / n_reps
 
