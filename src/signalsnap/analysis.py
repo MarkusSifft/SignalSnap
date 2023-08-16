@@ -1455,7 +1455,7 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson(self, order_in, T_window, f_max, n_reps=10, f_lists=None, backend='opencl', m=10, m_var=10,
+    def calc_spec_poisson(self, order_in, spectrum_size, f_max, n_reps=10, f_lists=None, backend='opencl', m=10, m_var=10,
                           m_stationarity=None, full_import=False, scale_t=1,
                           sigma_t=0.14, rect_win=False):
         """
@@ -1465,8 +1465,9 @@ class Spectrum:
         ----------
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [2,4]
-        T_window: int
-            spectra for m windows of window_points is calculated
+        spectrum_size: int
+            Number of points in one spectrum (Number of frequencies). Be aware, that more then 1000 points for order 3
+            and 4 can be computationally expensive.
         f_max: float
             maximum frequency of the spectra to be calculated
         f_lists: list of arrays
@@ -1500,7 +1501,7 @@ class Spectrum:
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, T_window, f_max, f_lists=f_lists, backend=backend,
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, spectrum_size, f_max, f_lists=f_lists, backend=backend,
                                                              m=m, m_var=m_var, m_stationarity=m_stationarity, full_import=full_import,
                                                              scale_t=scale_t, sigma_t=sigma_t, rect_win=rect_win)
 
@@ -1513,7 +1514,7 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson_one_spectrum(self, order_in, T_window, f_max, f_lists=None, backend='opencl', m=10, m_var=10,
+    def calc_spec_poisson_one_spectrum(self, order_in, spectrum_size, f_max, f_lists=None, backend='opencl', m=10, m_var=10,
                                        m_stationarity=None, full_import=False, scale_t=1,
                                        sigma_t=0.14, rect_win=False):
         """
@@ -1522,8 +1523,9 @@ class Spectrum:
         ----------
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [2,4]
-        T_window: int
-            spectra for m windows of window_points is calculated
+        spectrum_size: int
+            Number of points in one spectrum (Number of frequencies). Be aware, that more then 1000 points for order 3
+            and 4 can be computationally expensive.
         f_max: float
             maximum frequency of the spectra to be calculated
         f_lists: list of arrays
@@ -1565,7 +1567,8 @@ class Spectrum:
             self.delta_t = 1
 
         n_chunks = 0
-        self.T_window = T_window
+        f_min = f_max / spectrum_size
+        self.T_window = 1 / f_min
 
         if f_lists is not None:
             f_list = np.hstack(f_lists)
@@ -1573,7 +1576,6 @@ class Spectrum:
             f_list = None
 
         self.delta_t *= scale_t
-        f_min = 1 / T_window
         if f_list is None:
             f_list = np.arange(0, f_max + f_min, f_min)
 
@@ -1583,19 +1585,19 @@ class Spectrum:
         f_max_ind = len(f_list)
         w_list = 2 * np.pi * f_list
         w_list_gpu = to_gpu(w_list)
-        n_windows = int(self.data[-1] * scale_t // (T_window * m))
+        n_windows = int(self.data[-1] * scale_t // (self.T_window * m))
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
 
         self.__prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
 
-        single_window, N_window_full = calc_single_window(T_window / scale_t,
+        single_window, N_window_full = calc_single_window(self.T_window / scale_t,
                                                           1 / self.delta_t,
                                                           sigma_t=sigma_t)
         for frame_number in tqdm(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
-                                                                                  T_window / scale_t, frame_number,
+                                                                                  self.T_window / scale_t, frame_number,
                                                                                   enough_data)
             if not enough_data:
                 break
@@ -1609,12 +1611,12 @@ class Spectrum:
 
                 if t_clicks is not None:
 
-                    t_clicks_minus_start = t_clicks - i * T_window / scale_t - m * T_window / scale_t * frame_number
+                    t_clicks_minus_start = t_clicks - i * self.T_window / scale_t - m * self.T_window / scale_t * frame_number
 
                     if rect_win:
                         t_clicks_windowed = np.ones_like(t_clicks_minus_start)
                     else:
-                        t_clicks_windowed, single_window, N_window_full = apply_window(T_window / scale_t,
+                        t_clicks_windowed, single_window, N_window_full = apply_window(self.T_window / scale_t,
                                                                                        t_clicks_minus_start,
                                                                                        1 / self.delta_t,
                                                                                        sigma_t=sigma_t)
@@ -1638,7 +1640,7 @@ class Spectrum:
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-            self.delta_t = T_window / N_window_full  # 70 as defined in function apply_window(...)
+            self.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
             self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
 
