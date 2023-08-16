@@ -1285,6 +1285,48 @@ class Spectrum:
                 start_index = end_index
         return windows, start_index, enough_data
 
+    def process_order(self, order_in):
+        if order_in == 'all':
+            return [1, 2, 3, 4]
+        else:
+            return order_in
+
+    def reset_and_backend_setup(self, order_in, m, m_var, m_stationarity, backend='cpu'):
+        af.set_backend(backend)
+        orders = self.process_order(order_in)
+        self.__reset_variables(orders, m, m_var, m_stationarity)
+        return orders
+
+    def setup_data_calc_spec(self, spectrum_size, f_max, m, corr_shift, verbose):
+
+        f_max_actual = 1 / (2 * self.delta_t)
+        window_length_factor = f_max_actual / f_max
+
+        # Spectra for m windows with temporal length T_window are calculated.
+        self.T_window = (spectrum_size - 1) * 2 * self.delta_t * window_length_factor
+
+        corr_shift /= self.delta_t  # conversion of shift in seconds to shift in dt
+
+        window_points = int(np.round(self.T_window / self.delta_t))
+        print('Actual T_window:', window_points * self.delta_t)
+        self.window_points = window_points
+
+        n_data_points = self.data.shape[0]
+        n_windows = int(np.floor(n_data_points / (m * window_points)))
+        n_windows = int(
+            np.floor(n_windows - corr_shift / (m * window_points)))  # number of windows is reduced if corr shifted
+
+        self.fs = 1 / self.delta_t
+        freq_all_freq = rfftfreq(int(window_points), self.delta_t)
+        if verbose:
+            print('Maximum frequency:', np.max(freq_all_freq))
+
+        # ------ Check if f_max is too high ---------
+        f_mask = freq_all_freq <= f_max
+        f_max_ind = sum(f_mask)
+
+        return window_points, freq_all_freq, f_mask, f_max_ind, n_windows
+
     def calc_spec(self, order_in, spectrum_size, f_max, backend='cpu', scaling_factor=1,
                   corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                   break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
@@ -1344,14 +1386,7 @@ class Spectrum:
 
         """
 
-        af.set_backend(backend)
-
-        if order_in == 'all':
-            orders = [1, 2, 3, 4]
-        else:
-            orders = order_in
-
-        self.__reset_variables(orders, m, m_var, m_stationarity)
+        orders = self.reset_and_backend_setup(order_in, m, m_var, m_stationarity, backend)
 
         # -------data setup---------
         if self.data is None:
@@ -1360,17 +1395,6 @@ class Spectrum:
             raise MissingValueError('Missing value for delta_t')
 
         n_chunks = 0
-        f_max_actual = 1 / (2 * self.delta_t)
-        window_length_factor = f_max_actual / f_max
-
-        # Spectra for m windows with temporal length T_window are calculated.
-        self.T_window = (spectrum_size - 1) * 2 * self.delta_t * window_length_factor
-
-        corr_shift /= self.delta_t  # conversion of shift in seconds to shift in dt
-
-        window_points = int(np.round(self.T_window / self.delta_t))
-        print('Actual T_window:', window_points * self.delta_t)
-        self.window_points = window_points
 
         if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
             corr_data = self.import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
@@ -1380,19 +1404,8 @@ class Spectrum:
         else:
             corr_data = None
 
-        n_data_points = self.data.shape[0]
-        n_windows = int(np.floor(n_data_points / (m * window_points)))
-        n_windows = int(
-            np.floor(n_windows - corr_shift / (m * window_points)))  # number of windows is reduced if corr shifted
-
-        self.fs = 1 / self.delta_t
-        freq_all_freq = rfftfreq(int(window_points), self.delta_t)
-        if verbose:
-            print('Maximum frequency:', np.max(freq_all_freq))
-
-        # ------ Check if f_max is too high ---------
-        f_mask = freq_all_freq <= f_max
-        f_max_ind = sum(f_mask)
+        window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec(spectrum_size, f_max, m,
+                                                                                               corr_shift, verbose)
 
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
@@ -1455,7 +1468,8 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson(self, order_in, spectrum_size, f_max, n_reps=10, f_lists=None, backend='opencl', m=10, m_var=10,
+    def calc_spec_poisson(self, order_in, spectrum_size, f_max, n_reps=10, f_lists=None, backend='opencl', m=10,
+                          m_var=10,
                           m_stationarity=None, full_import=False, scale_t=1,
                           sigma_t=0.14, rect_win=False):
         """
@@ -1492,18 +1506,17 @@ class Spectrum:
         -------
 
         """
-        if order_in == 'all':
-            orders = [1, 2, 3, 4]
-        else:
-            orders = order_in
+        orders = self.process_order(order_in)
 
         all_S = []
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, spectrum_size, f_max, f_lists=f_lists, backend=backend,
-                                                             m=m, m_var=m_var, m_stationarity=m_stationarity, full_import=full_import,
-                                                             scale_t=scale_t, sigma_t=sigma_t, rect_win=rect_win)
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, spectrum_size, f_max, f_lists=f_lists,
+                                                              backend=backend,
+                                                              m=m, m_var=m_var, m_stationarity=m_stationarity,
+                                                              full_import=full_import,
+                                                              scale_t=scale_t, sigma_t=sigma_t, rect_win=rect_win)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1514,7 +1527,29 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson_one_spectrum(self, order_in, spectrum_size, f_max, f_lists=None, backend='opencl', m=10, m_var=10,
+    def setup_data_calc_spec_poisson(self, spectrum_size, f_max, m, f_lists, scale_t):
+
+        f_min = f_max / (spectrum_size - 1)
+        self.T_window = 1 / f_min
+
+        if f_lists is not None:
+            f_list = np.hstack(f_lists)
+        else:
+            f_list = None
+
+        self.delta_t *= scale_t
+        if f_list is None:
+            f_list = np.arange(0, f_max + f_min, f_min)
+
+        f_max_ind = len(f_list)
+        w_list = 2 * np.pi * f_list
+        w_list_gpu = to_gpu(w_list)
+        n_windows = int(self.data[-1] * scale_t // (self.T_window * m))
+
+        return f_list, f_max_ind, n_windows, w_list, w_list_gpu
+
+    def calc_spec_poisson_one_spectrum(self, order_in, spectrum_size, f_max, f_lists=None, backend='opencl', m=10,
+                                       m_var=10,
                                        m_stationarity=None, full_import=False, scale_t=1,
                                        sigma_t=0.14, rect_win=False):
         """
@@ -1551,14 +1586,7 @@ class Spectrum:
 
         """
 
-        af.set_backend(backend)
-
-        if order_in == 'all':
-            orders = [1, 2, 3, 4]
-        else:
-            orders = order_in
-
-        self.__reset_variables(orders, m, m_var, m_stationarity, f_lists)
+        orders = self.reset_and_backend_setup(order_in, m, m_var, m_stationarity, backend)
 
         # -------data setup---------
         if self.data is None:
@@ -1567,25 +1595,12 @@ class Spectrum:
             self.delta_t = 1
 
         n_chunks = 0
-        f_min = f_max / (spectrum_size - 1)
-        self.T_window = 1 / f_min
-
-        if f_lists is not None:
-            f_list = np.hstack(f_lists)
-        else:
-            f_list = None
-
-        self.delta_t *= scale_t
-        if f_list is None:
-            f_list = np.arange(0, f_max + f_min, f_min)
-
         start_index = 0
-
         enough_data = True
-        f_max_ind = len(f_list)
-        w_list = 2 * np.pi * f_list
-        w_list_gpu = to_gpu(w_list)
-        n_windows = int(self.data[-1] * scale_t // (self.T_window * m))
+
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(spectrum_size, f_max, m, f_lists,
+                                                                                 scale_t)
+
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
 
