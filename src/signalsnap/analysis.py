@@ -50,6 +50,8 @@ from scipy.fft import rfftfreq
 from scipy.ndimage.filters import gaussian_filter
 from tqdm.auto import tqdm
 
+from spectrum_config import SpectrumConfig
+
 
 class MissingValueError(Exception):
     """Base class for missing value exceptions"""
@@ -148,147 +150,6 @@ def c1(a_w):
     s1 = mean(a_w, dim=2)
 
     return s1[0]
-
-
-def c2(a_w, a_w_corr, m, coherent):
-    """calculation of c2 for power spectrum"""
-    # ---------calculate spectrum-----------
-    # C_2 = m / (m - 1) * (< a_w * a_w* > - < a_w > < a_w* >)
-    #                          sum_1         sum_2   sum_3
-    mean_1 = mean(a_w * conj(a_w_corr), dim=2)
-
-    if coherent:
-        s2 = mean_1
-    else:
-        mean_2 = mean(a_w, dim=2)
-        mean_3 = mean(conj(a_w_corr), dim=2)
-        s2 = m / (m - 1) * (mean_1 - mean_2 * mean_3)
-    return s2
-
-
-def c3(a_w1, a_w2, a_w3, m):
-    """
-    Calculation of c3 for bispectrum (see arXiv:1904.12154)
-    # C_3 = m^2 / (m - 1)(m - 2) * (< a_w1 * a_w2 * a_w3 >
-    #                                      sum_123
-    #       - < a_w1 >< a_w2 * a_w3 > - < a_w1 * a_w2 >< a_w3 > - < a_w1 * a_w3 >< a_w2 >
-    #          sum_1      sum_23           sum_12        sum_3         sum_13      sum_2
-    #       + 2 < a_w1 >< a_w2 >< a_w3 >)
-    #             sum_1   sum_2   sum_3
-    # with w3 = - w1 - w2
-
-    Parameters
-    ----------
-    a_w1 : array
-        Fourier coefficients of signal as vertical array
-    a_w2 : array
-        Fourier coefficients of signal as horizontal array
-    a_w3 : array
-        a_w1+w2 as matrix
-    m : int
-        Number of windows used for the calculation of one spectrum
-
-    Returns
-    -------
-    Returns the c3 estimator as matrix
-    """
-
-    ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
-    d_1 = af.matmulNT(ones, a_w1)
-    d_2 = af.matmulNT(a_w2, ones)
-    d_3 = a_w3
-    d_12 = d_1 * d_2
-    d_13 = d_1 * d_3
-    d_23 = d_2 * d_3
-    d_123 = d_1 * d_2 * d_3
-
-    d_1_mean = mean(d_1, dim=2)
-    d_2_mean = mean(d_2, dim=2)
-    d_3_mean = mean(d_3, dim=2)
-    d_12_mean = mean(d_12, dim=2)
-    d_13_mean = mean(d_13, dim=2)
-    d_23_mean = mean(d_23, dim=2)
-    d_123_mean = mean(d_123, dim=2)
-
-    s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
-                                         d_13_mean * d_2_mean - d_23_mean * d_1_mean +
-                                         2 * d_1_mean * d_2_mean * d_3_mean)
-    return s3
-
-
-def c4(a_w, a_w_corr, m):
-    """
-    calculation of c4 for trispectrum
-    # C_4 = (Eq. 60, in arXiv:1904.12154)
-
-    Parameters
-    ----------
-    a_w : array
-        Fourier coefficients of the signal
-    a_w_corr : array
-        Fourier coefficients of the signal or a second signal
-    m : int
-        Number of windows used for the calculation of one spectrum
-
-    Returns
-    -------
-    Returns the c4 estimator as matrix
-
-    """
-
-    a_w_conj = conj(a_w)
-    a_w_conj_corr = conj(a_w_corr)
-
-    ones = to_gpu(np.ones_like(a_w.to_ndarray()[:, :, 0]))
-
-    sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr)
-    sum_11c22c_m = mean(sum_11c22c, dim=2)
-
-    sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr)
-    sum_11c2_m = mean(sum_11c2, dim=2)
-    sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr)
-    sum_122c_m = mean(sum_122c, dim=2)
-    sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr)
-    sum_1c22c_m = mean(sum_1c22c, dim=2)
-    sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr)
-    sum_11c2c_m = mean(sum_11c2c, dim=2)
-
-    sum_11c = a_w * a_w_conj
-    sum_11c_m = mean(sum_11c, dim=2)
-    sum_22c = a_w_corr * a_w_conj_corr
-    sum_22c_m = mean(sum_22c, dim=2)
-    sum_12c = af.matmulNT(a_w, a_w_conj_corr)
-    sum_12c_m = mean(sum_12c, dim=2)
-    sum_1c2 = af.matmulNT(a_w_conj, a_w_corr)
-    sum_1c2_m = mean(sum_1c2, dim=2)
-
-    sum_12 = af.matmulNT(a_w, a_w_corr)
-    sum_12_m = mean(sum_12, dim=2)
-    sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr)
-    sum_1c2c_m = mean(sum_1c2c, dim=2)
-
-    sum_1_m = mean(a_w, dim=2)
-    sum_1c_m = mean(a_w_conj, dim=2)
-    sum_2_m = mean(a_w_corr, dim=2)
-    sum_2c_m = mean(a_w_conj_corr, dim=2)
-
-    sum_11c_m = af.matmulNT(sum_11c_m, ones)
-    sum_22c_m = af.matmulNT(ones, sum_22c_m)
-    sum_1_m = af.matmulNT(sum_1_m, ones)
-    sum_1c_m = af.matmulNT(sum_1c_m, ones)
-    sum_2_m = af.matmulNT(ones, sum_2_m)
-    sum_2c_m = af.matmulNT(ones, sum_2c_m)
-
-    s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
-            (m + 1) * sum_11c22c_m - (m + 1) * (sum_11c2_m * sum_2c_m + sum_11c2c_m * sum_2_m +
-                                                sum_122c_m * sum_1c_m + sum_1c22c_m * sum_1_m)
-            - (m - 1) * (sum_11c_m * sum_22c_m + sum_12_m * sum_1c2c_m + sum_12c_m * sum_1c2_m)
-            + 2 * m * (sum_11c_m * sum_2_m * sum_2c_m + sum_12_m * sum_1c_m * sum_2c_m +
-                       sum_12c_m * sum_1c_m * sum_2_m + sum_22c_m * sum_1_m * sum_1c_m +
-                       sum_1c2c_m * sum_1_m * sum_2_m + sum_1c2_m * sum_1_m * sum_2c_m)
-            - 6 * m * sum_1_m * sum_1c_m * sum_2_m * sum_2c_m)
-
-    return s4
 
 
 @njit
@@ -407,45 +268,6 @@ def cgw(N_window, fs=None, ones=False):
     return window / np.sqrt(norm), norm
 
 
-def calc_single_window(window_width, fs, sigma_t=0.14):
-    """
-        Return a single example of the window function for normalization purposes.
-
-        Parameters
-        ----------
-        window_width : float
-            timely width of the window in unit of choice
-        fs : float
-            sampling rate of the signal
-        sigma_t : float
-            parameter of the approx. confined gaussian window (here chosen to be 0.14)
-
-        Returns
-        -------
-
-        """
-
-    # ----- Calculation of g_k -------
-
-    dt = 1 / fs
-
-    N_window = window_width / dt
-    L = N_window + 1
-
-    # if ones:
-    #    window = np.ones(N_window)
-
-    # ------ Normalizing by calculating full window with given resolution ------
-
-    N_window_full = 70
-    dt_full = window_width / N_window_full
-
-    # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
-    window_full, norm = cgw(N_window_full, 1 / dt_full)
-
-    return window_full, N_window_full
-
-
 @njit
 def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
     """
@@ -556,32 +378,6 @@ def connect_broken_axis(s_f, broken_lims):
     return s_f, diffs, broken_lims_scaled
 
 
-def add_random_phase(a_w, window_size, delta_t, m):
-    """(Experimental function) Adds a random phase proportional to the frequency to deal with ultra coherent signals
-
-    Parameters
-    ----------
-    m : int
-        number of windows per frame
-    delta_t : float
-        inverse of the sampling rate of the signal
-    window_size : int
-        size of the window in points
-    a_w : array
-        Fourier coefficients pf the window
-
-    """
-
-    random_factors = np.random.uniform(high=window_size * delta_t, size=m)
-    freq_all_freq = rfftfreq(int(window_size), delta_t)
-    freq_mat = np.tile(np.array([freq_all_freq]).T, m)
-    factors = np.exp(1j * 2 * np.pi * freq_mat * random_factors)
-    factors = factors.reshape(a_w.shape)
-    factors_gpu = to_gpu(factors)
-    a_w_phased = a_w * factors_gpu
-    return a_w_phased
-
-
 def unit_conversion(f_unit):
     """
     Helper function to automatically convert units.
@@ -611,41 +407,7 @@ def unit_conversion(f_unit):
     return t_unit
 
 
-def plot_first_frame(chunk, delta_t, window_size, t_unit=None):
-    """
-    Helper function for plotting one window during the calculation of the spectra for checking data and correct
-    window length
-
-    Parameters
-    ----------
-    chunk : array
-        one frame of the dataset
-    delta_t : float
-        inverse sampling rate of the signal
-    window_size : int
-        size of window in points
-
-    """
-    first_frame = chunk[:window_size]
-    t = np.arange(0, len(first_frame) * delta_t, delta_t)
-    plt.figure(figsize=(14, 3))
-
-    plt.rc('text', usetex=False)
-    plt.rc('font', size=12)
-    plt.rcParams["axes.axisbelow"] = False
-
-    plt.title('data in first window')
-
-    plt.plot(t, first_frame)
-
-    plt.xlim([0, t[-1]])
-    plt.xlabel('t / (' + t_unit + ')')
-    plt.ylabel('amplitude')
-
-    plt.show()
-
-
-class Spectrum:
+class SpectrumCalculator:
     """
     Spectrum class stores signal data, calculated spectra and error of spectral values.
     Allows for the calculation of the polyspectra of the signal and their visualization.
@@ -737,13 +499,10 @@ class Spectrum:
         Counts the number single spectra already stored for the averaging for the stationarity plot
     """
 
-    def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None, corr_data=None,
-                 corr_path=None, corr_group_key=None, corr_dataset=None, f_unit='Hz'):
-        self.corr_data_path = None
+    def __init__(self, config: SpectrumConfig):
+        self.config = config
         self.T_window = None
-        self.path = path
         self.freq = {2: None, 3: None, 4: None}
-        self.f_max = 0
         self.fs = None
         self.f_lists = {2: None, 3: None, 4: None}
         self.S = {1: None, 2: None, 3: None, 4: None}
@@ -753,26 +512,257 @@ class Spectrum:
         self.S_errs = {1: None, 2: [], 3: [], 4: []}
         self.S_stationarity_temp = {1: None, 2: None, 3: None, 4: None}
         self.S_stationarity = {1: [], 2: [], 3: [], 4: []}
-        self.group_key = group_key
-        self.dataset = dataset
         self.window_points = None
         self.m = {1: None, 2: None, 3: None, 4: None}
         self.m_var = {1: None, 2: None, 3: None, 4: None}
         self.m_stationarity = {1: None, 2: None, 3: None, 4: None}
         self.first_frame_plotted = False
-        self.delta_t = delta_t
-        self.data = data
-        self.corr_data = corr_data
-        self.corr_path = corr_path
-        self.corr_group_key = corr_group_key
-        self.corr_dataset = corr_dataset
         self.main_data = None
         self.err_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
-        self.f_unit = f_unit
-        self.t_unit = unit_conversion(f_unit)
+        self.t_unit = unit_conversion(config.f_unit)
 
-    def import_data(self, path, group_key, dataset, full_import=False):
+    def calc_single_window(self):
+        """
+        Return a single example of the window function for normalization purposes.
+
+        Parameters
+        ----------
+        window_width : float
+            timely width of the window in unit of choice
+        fs : float
+            sampling rate of the signal
+        sigma_t : float
+            parameter of the approx. confined gaussian window (here chosen to be 0.14)
+
+        Returns
+        -------
+
+        """
+
+        # ----- Calculation of g_k -------
+
+        N_window = self.T_window / self.config.delta_t
+        L = N_window + 1
+
+        # if ones:
+        #    window = np.ones(N_window)
+
+        # ------ Normalizing by calculating full window with given resolution ------
+
+        N_window_full = 70
+        dt_full = self.T_window / N_window_full
+
+        # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
+        window_full, norm = cgw(N_window_full, 1 / dt_full)
+
+        return window_full, N_window_full
+
+    def plot_first_frame(self, chunk, window_size):
+        """
+        Helper function for plotting one window during the calculation of the spectra for checking data and correct
+        window length
+
+        Parameters
+        ----------
+        chunk : array
+            one frame of the dataset
+        delta_t : float
+            inverse sampling rate of the signal
+        window_size : int
+            size of window in points
+
+        """
+        first_frame = chunk[:self.window_size]
+        t = np.arange(0, len(first_frame) * self.config.delta_t, self.config.delta_t)
+        plt.figure(figsize=(14, 3))
+
+        plt.rc('text', usetex=False)
+        plt.rc('font', size=12)
+        plt.rcParams["axes.axisbelow"] = False
+
+        plt.title('data in first window')
+
+        plt.plot(t, first_frame)
+
+        plt.xlim([0, t[-1]])
+        plt.xlabel('t / (' + self.t_unit + ')')
+        plt.ylabel('amplitude')
+
+        plt.show()
+    def c2(self, a_w, a_w_corr):
+        """calculation of c2 for power spectrum"""
+        # ---------calculate spectrum-----------
+        # C_2 = m / (m - 1) * (< a_w * a_w* > - < a_w > < a_w* >)
+        #                          sum_1         sum_2   sum_3
+
+        m = self.config.m
+
+        mean_1 = mean(a_w * conj(a_w_corr), dim=2)
+
+        if self.config.coherent:
+            s2 = mean_1
+        else:
+            mean_2 = mean(a_w, dim=2)
+            mean_3 = mean(conj(a_w_corr), dim=2)
+            s2 = m / (m - 1) * (mean_1 - mean_2 * mean_3)
+        return s2
+
+    def c3(self, a_w1, a_w2, a_w3):
+        """
+        Calculation of c3 for bispectrum (see arXiv:1904.12154)
+        # C_3 = m^2 / (m - 1)(m - 2) * (< a_w1 * a_w2 * a_w3 >
+        #                                      sum_123
+        #       - < a_w1 >< a_w2 * a_w3 > - < a_w1 * a_w2 >< a_w3 > - < a_w1 * a_w3 >< a_w2 >
+        #          sum_1      sum_23           sum_12        sum_3         sum_13      sum_2
+        #       + 2 < a_w1 >< a_w2 >< a_w3 >)
+        #             sum_1   sum_2   sum_3
+        # with w3 = - w1 - w2
+
+        Parameters
+        ----------
+        a_w1 : array
+            Fourier coefficients of signal as vertical array
+        a_w2 : array
+            Fourier coefficients of signal as horizontal array
+        a_w3 : array
+            a_w1+w2 as matrix
+        m : int
+            Number of windows used for the calculation of one spectrum
+
+        Returns
+        -------
+        Returns the c3 estimator as matrix
+        """
+
+        m = self.config.m
+
+        ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
+        d_1 = af.matmulNT(ones, a_w1)
+        d_2 = af.matmulNT(a_w2, ones)
+        d_3 = a_w3
+        d_12 = d_1 * d_2
+        d_13 = d_1 * d_3
+        d_23 = d_2 * d_3
+        d_123 = d_1 * d_2 * d_3
+
+        d_1_mean = mean(d_1, dim=2)
+        d_2_mean = mean(d_2, dim=2)
+        d_3_mean = mean(d_3, dim=2)
+        d_12_mean = mean(d_12, dim=2)
+        d_13_mean = mean(d_13, dim=2)
+        d_23_mean = mean(d_23, dim=2)
+        d_123_mean = mean(d_123, dim=2)
+
+        s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
+                                             d_13_mean * d_2_mean - d_23_mean * d_1_mean +
+                                             2 * d_1_mean * d_2_mean * d_3_mean)
+        return s3
+
+    def c4(self, a_w, a_w_corr):
+        """
+        calculation of c4 for trispectrum
+        # C_4 = (Eq. 60, in arXiv:1904.12154)
+
+        Parameters
+        ----------
+        a_w : array
+            Fourier coefficients of the signal
+        a_w_corr : array
+            Fourier coefficients of the signal or a second signal
+        m : int
+            Number of windows used for the calculation of one spectrum
+
+        Returns
+        -------
+        Returns the c4 estimator as matrix
+
+        """
+
+        m = self.config.m
+
+        a_w_conj = conj(a_w)
+        a_w_conj_corr = conj(a_w_corr)
+
+        ones = to_gpu(np.ones_like(a_w.to_ndarray()[:, :, 0]))
+
+        sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr)
+        sum_11c22c_m = mean(sum_11c22c, dim=2)
+
+        sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr)
+        sum_11c2_m = mean(sum_11c2, dim=2)
+        sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr)
+        sum_122c_m = mean(sum_122c, dim=2)
+        sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr)
+        sum_1c22c_m = mean(sum_1c22c, dim=2)
+        sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr)
+        sum_11c2c_m = mean(sum_11c2c, dim=2)
+
+        sum_11c = a_w * a_w_conj
+        sum_11c_m = mean(sum_11c, dim=2)
+        sum_22c = a_w_corr * a_w_conj_corr
+        sum_22c_m = mean(sum_22c, dim=2)
+        sum_12c = af.matmulNT(a_w, a_w_conj_corr)
+        sum_12c_m = mean(sum_12c, dim=2)
+        sum_1c2 = af.matmulNT(a_w_conj, a_w_corr)
+        sum_1c2_m = mean(sum_1c2, dim=2)
+
+        sum_12 = af.matmulNT(a_w, a_w_corr)
+        sum_12_m = mean(sum_12, dim=2)
+        sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr)
+        sum_1c2c_m = mean(sum_1c2c, dim=2)
+
+        sum_1_m = mean(a_w, dim=2)
+        sum_1c_m = mean(a_w_conj, dim=2)
+        sum_2_m = mean(a_w_corr, dim=2)
+        sum_2c_m = mean(a_w_conj_corr, dim=2)
+
+        sum_11c_m = af.matmulNT(sum_11c_m, ones)
+        sum_22c_m = af.matmulNT(ones, sum_22c_m)
+        sum_1_m = af.matmulNT(sum_1_m, ones)
+        sum_1c_m = af.matmulNT(sum_1c_m, ones)
+        sum_2_m = af.matmulNT(ones, sum_2_m)
+        sum_2c_m = af.matmulNT(ones, sum_2c_m)
+
+        s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
+                (m + 1) * sum_11c22c_m - (m + 1) * (sum_11c2_m * sum_2c_m + sum_11c2c_m * sum_2_m +
+                                                    sum_122c_m * sum_1c_m + sum_1c22c_m * sum_1_m)
+                - (m - 1) * (sum_11c_m * sum_22c_m + sum_12_m * sum_1c2c_m + sum_12c_m * sum_1c2_m)
+                + 2 * m * (sum_11c_m * sum_2_m * sum_2c_m + sum_12_m * sum_1c_m * sum_2c_m +
+                           sum_12c_m * sum_1c_m * sum_2_m + sum_22c_m * sum_1_m * sum_1c_m +
+                           sum_1c2c_m * sum_1_m * sum_2_m + sum_1c2_m * sum_1_m * sum_2c_m)
+                - 6 * m * sum_1_m * sum_1c_m * sum_2_m * sum_2c_m)
+
+        return s4
+
+    def add_random_phase(self, a_w, window_size):
+        """(Experimental function) Adds a random phase proportional to the frequency to deal with ultra coherent signals
+
+        Parameters
+        ----------
+        m : int
+            number of windows per frame
+        delta_t : float
+            inverse of the sampling rate of the signal
+        window_size : int
+            size of the window in points
+        a_w : array
+            Fourier coefficients pf the window
+
+        """
+
+        m = self.config.m
+
+        random_factors = np.random.uniform(high=window_size * self.config.delta_t, size=m)
+        freq_all_freq = rfftfreq(int(window_size), self.config.delta_t)
+        freq_mat = np.tile(np.array([freq_all_freq]).T, m)
+        factors = np.exp(1j * 2 * np.pi * freq_mat * random_factors)
+        factors = factors.reshape(a_w.shape)
+        factors_gpu = to_gpu(factors)
+        a_w_phased = a_w * factors_gpu
+        return a_w_phased
+
+    def import_data(self):
         """
         Helper function to load data from h5 file into numpy array.
         Import of .h5 data with format group_key -> data + attrs[dt]
@@ -793,26 +783,26 @@ class Spectrum:
         Returns simulation result and inverse sampling rate
         """
 
-        main = h5py.File(path, 'r')
-        if group_key == '':
-            main_data = main[dataset]
+        main = h5py.File(self.config.path, 'r')
+        if self.config.group_key == '':
+            main_data = main[self.config.dataset]
         else:
-            main_group = main[group_key]
-            main_data = main_group[dataset]
-        if self.delta_t is None:
-            self.delta_t = main_data.attrs['dt']
-        if full_import:
+            main_group = main[self.config.group_key]
+            main_data = main_group[self.config.dataset]
+        if self.config.delta_t is None:
+            self.config.delta_t = main_data.attrs['dt']
+        if self.config.full_import:
             return main_data[()]
         else:
             return main_data
 
-    def save_spec(self, path):
+    def save_spec(self, save_path):
         """
         Method for storing the Spectrum object. Pointers and the full dataset are remove from the object before saving.
 
         Parameters
         ----------
-        path : str
+        save_path : str
             Location of stored file
 
         """
@@ -823,10 +813,10 @@ class Spectrum:
         self.data = None
         self.S_errs = None
         self.S_stationarity_temp = None
-        pickle_save(path, self)
+        pickle_save(save_path, self)
 
-    def stationarity_plot(self, f_unit=None, t_unit=None, contours=False, s2_filter=0, arcsinh_plot=False,
-                          arcsinh_const=1e-4, f_max=None,
+    def stationarity_plot(self, contours=False, s2_filter=0, arcsinh_plot=False,
+                          arcsinh_const=1e-4, plot_f_max=None,
                           normalize=False):
         """
         Plots the S_stationarity spectra versus time to make changes over time visible
@@ -846,7 +836,7 @@ class Spectrum:
             values). The amount of scaling is given by the arcsinh_const.
         arcsinh_const : float
             constant to set amount of arcsinh scaling. The lower, the stronger.
-        f_max : float
+        plot_f_max : float
             maximum frequency to plot on the fequency axis
         normalize : ['area', 'zero']
             for better visualization all spectra can be normalized to set the
@@ -856,12 +846,6 @@ class Spectrum:
         -------
 
         """
-
-        if f_unit is None:
-            f_unit = self.f_unit
-
-        if t_unit is None:
-            t_unit = self.t_unit
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(24, 7))
         plt.rc('text', usetex=False)
@@ -891,7 +875,7 @@ class Spectrum:
 
         t_for_one_spec = self.T_window * self.m[2] * self.m_stationarity[2]
         time_axis = np.arange(0, s2_array.shape[1] * t_for_one_spec, t_for_one_spec)
-        print(f'One spectrum calculated from a {t_for_one_spec * (s2_filter + 1)} ' + t_unit + ' measurement')
+        print(f'One spectrum calculated from a {t_for_one_spec * (s2_filter + 1)} ' + self.t_unit + ' measurement')
 
         s2_f = self.freq[2].copy()
         if broken_lims is not None:
@@ -906,12 +890,12 @@ class Spectrum:
         if contours:
             ax.contour(x, y, s2_array, 7, colors='k', linewidths=0.7)
 
-        if f_max:
-            ax.axis([0, np.max(time_axis), 0, f_max])
-        ax.set_xlabel(r"$t$ (" + t_unit + r")", fontdict={'fontsize': 14})
-        ax.set_ylabel(r"$\omega / 2 \pi$ (" + f_unit + r")", fontdict={'fontsize': 14})
+        if plot_f_max:
+            ax.axis([0, np.max(time_axis), 0, plot_f_max])
+        ax.set_xlabel(r"$t$ (" + self.t_unit + r")", fontdict={'fontsize': 14})
+        ax.set_ylabel(r"$\omega / 2 \pi$ (" + self.config.f_unit + r")", fontdict={'fontsize': 14})
         ax.tick_params(axis='both', direction='in')
-        ax.set_title(r'$S^{(2)}_z $ (' + f_unit + r'$^{-1}$) vs $' + t_unit + r'$',
+        ax.set_title(r'$S^{(2)}_z $ (' + self.config.f_unit + r'$^{-1}$) vs $' + self.t_unit + r'$',
                      fontdict={'fontsize': 16})
         _ = fig.colorbar(c, ax=ax)
 
@@ -929,7 +913,7 @@ class Spectrum:
             y_labels = [str(np.round(i * 1000) / 1000) for i in y_labels]
             ax.set_yticklabels(y_labels)
 
-    def __store_single_spectrum(self, single_spectrum, order, m_var, m_stationarity):
+    def __store_single_spectrum(self, single_spectrum, order):
 
         """
         Helper function to store the spectra of single frames afterwards used for calculation of errors and overlaps.
@@ -960,7 +944,7 @@ class Spectrum:
             self.S_errs[order][:, :, self.err_counter[order]] = single_spectrum
         self.err_counter[order] += 1
 
-        if m_stationarity is not None:
+        if self.config.m_stationarity is not None:
             if order == 1:
                 self.S_stationarity_temp[order][0, self.stationarity_counter[order]] = single_spectrum
             elif order == 2:
@@ -969,7 +953,7 @@ class Spectrum:
                 self.S_stationarity_temp[order][:, :, self.stationarity_counter[order]] = single_spectrum
             self.stationarity_counter[order] += 1
 
-            if self.stationarity_counter[order] % m_stationarity == 0:
+            if self.stationarity_counter[order] % self.config.m_stationarity == 0:
                 if order == 1:
                     self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
                 elif order == 2:
@@ -978,18 +962,18 @@ class Spectrum:
                     self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=2).to_ndarray())
                 self.stationarity_counter[order] = 0
 
-        if self.err_counter[order] % m_var == 0:
+        if self.err_counter[order] % self.config.m_var == 0:
             if order == 1 or order == 2:
                 dim = 1
             else:
                 dim = 2
 
             S_err_gpu_real = af.sqrt(
-                m_var / (m_var - 1) * (af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
+                self.config.m_var / (self.config.m_var - 1) * (af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                                        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
                             af.real(self.S_errs[order]), dim=dim)))
             S_err_gpu_imag = af.sqrt(
-                m_var / (m_var - 1) * (af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
+                self.config.m_var / (self.config.m_var - 1) * (af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
                                        af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
                             af.imag(self.S_errs[order]), dim=dim)))
 
@@ -1035,8 +1019,8 @@ class Spectrum:
         overlap_s4 = [np.var(self.S_stationarity[4][:, :, i] * self.S[4]) for i in
                       range(self.S_stationarity[4].shape[2])]
 
-        t = np.linspace(0, self.delta_t * self.main_data.shape[0], self.S_stationarity[4][1, 1, :].shape[0]) / scale_t
-        t_main = np.linspace(0, self.delta_t * self.main_data.shape[0], self.main_data.shape[0]) / scale_t
+        t = np.linspace(0, self.config.delta_t * self.main_data.shape[0], self.S_stationarity[4][1, 1, :].shape[0]) / scale_t
+        t_main = np.linspace(0, self.config.delta_t * self.main_data.shape[0], self.main_data.shape[0]) / scale_t
 
         if imag:
             overlap_s2 = np.imag(overlap_s2)
@@ -1058,9 +1042,8 @@ class Spectrum:
         plt.show()
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
-    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity,
+    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind,
                                     single_window, window=None, chunk_corr_gpu=None,
-                                    coherent=False, random_phase=False,
                                     window_points=None):
         """
         Helper function to calculate the (1,2,3,4)-order cumulant from the Fourier coefficients of the m windows in
@@ -1098,7 +1081,7 @@ class Spectrum:
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
-                single_spectrum = c1(a_w) / self.delta_t / single_window.mean() / single_window.shape[0]
+                single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
@@ -1106,36 +1089,36 @@ class Spectrum:
                 if self.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
-                    single_spectrum = c2(a_w, a_w_corr, m, coherent=coherent) / (
-                            self.delta_t * (single_window ** order).sum())
+                    single_spectrum = self.c2(a_w, a_w_corr) / (
+                            self.config.delta_t * (single_window ** order).sum())
 
                 else:
-                    single_spectrum = c2(a_w, a_w, m, coherent=coherent) / (
-                            self.delta_t * (single_window ** order).sum())
+                    single_spectrum = self.c2(a_w, a_w) / (
+                            self.config.delta_t * (single_window ** order).sum())
 
             elif order == 3:
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
                 a_w2 = a_w1
-                a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, m))
-                single_spectrum = c3(a_w1, a_w2, a_w3, m) / (self.delta_t * (single_window ** order).sum())
+                a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind))
+                single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
             else:  # order 4
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
 
                 if self.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
-                    if random_phase:
-                        a_w_all_corr = add_random_phase(a_w_all_corr, window_points, self.delta_t, m)
+                    if self.config.random_phase:
+                        a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points, self.config.delta_t)
 
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
                 else:
                     a_w_corr = a_w
 
-                single_spectrum = c4(a_w, a_w_corr, m) / (self.delta_t * (single_window ** order).sum())
+                single_spectrum = self.c4(a_w, a_w_corr) / (self.config.delta_t * (single_window ** order).sum())
 
-            self.__store_single_spectrum(single_spectrum, order, m_var, m_stationarity)
+            self.__store_single_spectrum(single_spectrum, order)
 
-    def __prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind, m_var, m_stationarity):
+    def __prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind):
         """
         Helper function to calculate the frequency array and empty array for the later storage of spectra and errors.
 
@@ -1164,29 +1147,29 @@ class Spectrum:
                 self.freq[order] = f_all_in
 
             if order == 1:
-                self.S_errs[1] = to_gpu(1j * np.ones((1, m_var)))
+                self.S_errs[1] = to_gpu(1j * np.ones((1, self.config.m_var)))
             elif order == 2:
-                self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, m_var)))
+                self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_var)))
             elif order == 3:
-                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, m_var)))
+                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_var)))
             elif order == 4:
-                self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, m_var)))
+                self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_var)))
 
-            if m_stationarity is not None:
+            if self.config.m_stationarity is not None:
                 if order == 1:
-                    self.S_stationarity_temp[1] = to_gpu(1j * np.ones((1, m_stationarity)))
+                    self.S_stationarity_temp[1] = to_gpu(1j * np.ones((1, self.config.m_stationarity)))
                 elif order == 2:
-                    self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, m_stationarity)))
+                    self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_stationarity)))
                 elif order == 3:
                     self.S_stationarity_temp[3] = to_gpu(
-                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, m_stationarity)))
+                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_stationarity)))
                 elif order == 4:
-                    self.S_stationarity_temp[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, m_stationarity)))
+                    self.S_stationarity_temp[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
 
         if not 1 in orders or not len(orders) == 1:
             print('Number of points: ' + str(len(self.freq[2])))
 
-    def __reset_variables(self, orders, m, m_var, m_stationarity, f_lists=None):
+    def __reset_variables(self, orders, f_lists=None):
         """
         Helper function to reset all variables in case spectra are recalculated.
 
@@ -1211,9 +1194,9 @@ class Spectrum:
         self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         for order in orders:
             self.f_lists[order] = f_lists
-            self.m[order] = m
-            self.m_var[order] = m_var
-            self.m_stationarity[order] = m_stationarity
+            self.m[order] = self.config.m
+            self.m_var[order] = self.config.m_var
+            self.m_stationarity[order] = self.config.m_stationarity
             self.freq[order] = None
             self.S[order] = None
             self.S_gpu[order] = None
@@ -1223,7 +1206,7 @@ class Spectrum:
             self.S_stationarity_temp[order] = []
             self.S_stationarity[order] = []
 
-    def __store_final_spectra(self, orders, n_chunks, n_windows, m_var):
+    def __store_final_spectra(self, orders, n_chunks, n_windows):
         """
         Helper function to move spectra for GPU to RAM as the last step of spectra calculation.
 
@@ -1246,9 +1229,9 @@ class Spectrum:
             self.S_gpu[order] /= n_chunks
             self.S[order] = self.S_gpu[order].to_ndarray()
 
-            self.S_err[order] /= n_windows // m_var * np.sqrt(n_windows)
+            self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
-    def __find_datapoints_in_windows(self, data, m, start_index, T_window, frame_number, enough_data):
+    def __find_datapoints_in_windows(self, start_index, frame_number, enough_data):
         """
         Helper function for the calc_spec_poisson function. Used to find all click times within a window.
 
@@ -1272,8 +1255,8 @@ class Spectrum:
 
         """
         windows = []
-        for i in range(m):
-            end_index = find_end_index(data, start_index, T_window, m, frame_number, i)
+        for i in range(self.config.m):
+            end_index = find_end_index(self.data, start_index, self.T_window, self.config.m, frame_number, i)
             if end_index == -1:
                 enough_data = False
                 break
@@ -1285,52 +1268,49 @@ class Spectrum:
                 start_index = end_index
         return windows, start_index, enough_data
 
-    def process_order(self, order_in):
-        if order_in == 'all':
+    def process_order(self):
+        if self.config.order_in == 'all':
             return [1, 2, 3, 4]
         else:
-            return order_in
+            return self.config.order_in
 
-    def reset_and_backend_setup(self, order_in, m, m_var, m_stationarity, backend='cpu'):
-        af.set_backend(backend)
-        orders = self.process_order(order_in)
-        self.__reset_variables(orders, m, m_var, m_stationarity)
+    def reset_and_backend_setup(self):
+        af.set_backend(self.config.backend)
+        orders = self.process_order()
+        self.__reset_variables(orders)
         return orders
 
-    def setup_data_calc_spec(self, spectrum_size, f_max, m, corr_shift, verbose):
+    def setup_data_calc_spec(self):
 
-        f_max_actual = 1 / (2 * self.delta_t)
-        window_length_factor = f_max_actual / f_max
+        f_max_actual = 1 / (2 * self.config.delta_t)
+        window_length_factor = f_max_actual / self.config.f_max
 
         # Spectra for m windows with temporal length T_window are calculated.
-        self.T_window = (spectrum_size - 1) * 2 * self.delta_t * window_length_factor
+        self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
 
-        corr_shift /= self.delta_t  # conversion of shift in seconds to shift in dt
+        self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
 
-        window_points = int(np.round(self.T_window / self.delta_t))
-        print('Actual T_window:', window_points * self.delta_t)
+        window_points = int(np.round(self.T_window / self.config.delta_t))
+        print('Actual T_window:', window_points * self.config.delta_t)
         self.window_points = window_points
 
         n_data_points = self.data.shape[0]
-        n_windows = int(np.floor(n_data_points / (m * window_points)))
+        n_windows = int(np.floor(n_data_points / (self.config.m * window_points)))
         n_windows = int(
-            np.floor(n_windows - corr_shift / (m * window_points)))  # number of windows is reduced if corr shifted
+            np.floor(n_windows - self.config.corr_shift / (self.config.m * window_points)))  # number of windows is reduced if corr shifted
 
-        self.fs = 1 / self.delta_t
-        freq_all_freq = rfftfreq(int(window_points), self.delta_t)
-        if verbose:
+        self.fs = 1 / self.config.delta_t
+        freq_all_freq = rfftfreq(int(window_points), self.config.delta_t)
+        if self.config.verbose:
             print('Maximum frequency:', np.max(freq_all_freq))
 
         # ------ Check if f_max is too high ---------
-        f_mask = freq_all_freq <= f_max
+        f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
 
         return window_points, freq_all_freq, f_mask, f_max_ind, n_windows
 
-    def calc_spec(self, order_in, spectrum_size, f_max, backend='cpu', scaling_factor=1,
-                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                  break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
-                  rect_win=False, full_import=True, show_first_frame=True):
+    def calc_spec(self):
 
         """
         Calculation of spectra of orders 1 to 4 with the arrayfire library.
@@ -1386,60 +1366,60 @@ class Spectrum:
 
         """
 
-        orders = self.reset_and_backend_setup(order_in, m, m_var, m_stationarity, backend)
+        orders = self.reset_and_backend_setup()
 
         # -------data setup---------
-        if self.data is None:
-            self.data = self.import_data(self.path, self.group_key, self.dataset, full_import=full_import)
-        if self.delta_t is None:
+        if self.config.data is None:
+            self.data = self.import_data()
+        else:
+            self.data = self.config.data
+        if self.config.delta_t is None:
             raise MissingValueError('Missing value for delta_t')
 
         n_chunks = 0
 
-        if self.corr_data is None and not corr_default == 'white_noise' and self.corr_path is not None:
-            corr_data = self.import_data(self.corr_data_path, self.corr_group_key, self.corr_dataset,
-                                         full_import=full_import)
-        elif self.corr_data is not None:
-            corr_data = self.corr_data
+        if self.config.corr_data is None and not self.config.corr_default == 'white_noise' and self.config.corr_path is not None:
+            corr_data = self.import_data()
+        elif self.config.corr_data is not None:
+            corr_data = self.config.corr_data
         else:
             corr_data = None
 
-        window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec(spectrum_size, f_max, m,
-                                                                                               corr_shift, verbose)
-
+        window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec()
+        m = self.config.m
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
-        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
+        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind)
 
-        for i in tqdm(np.arange(0, n_windows - 1 + window_shift, window_shift), leave=False):
+        for i in tqdm(np.arange(0, n_windows - 1 + self.config.window_shift, self.config.window_shift), leave=False):
 
-            chunk = scaling_factor * self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
-            if not self.first_frame_plotted and show_first_frame:
-                plot_first_frame(chunk, self.delta_t, window_points, self.t_unit)
+            chunk = self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
+            if not self.first_frame_plotted and self.config.show_first_frame:
+                self.plot_first_frame(chunk, window_points)
                 self.first_frame_plotted = True
 
             chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
 
-            if corr_default == 'white_noise':  # use white noise to check for false correlations
+            if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
                 chunk_corr = np.random.randn(window_points, 1, m)
                 chunk_corr_gpu = to_gpu(chunk_corr)
             elif self.corr_data is not None:
-                chunk_corr = scaling_factor * corr_data[int(i * (window_points * m) + corr_shift): int(
-                    (i + 1) * (window_points * m) + corr_shift)]
+                chunk_corr = self.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
+                    (i + 1) * (window_points * m) + self.config.corr_shift)]
                 chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
             else:
                 chunk_corr_gpu = None
 
             if n_chunks == 0:
-                if verbose:
+                if self.config.verbose:
                     print('chunk shape: ', chunk_gpu.shape[0])
 
             # ---------count windows-----------
             n_chunks += 1
 
             # -------- perform fourier transform ----------
-            if rect_win:
+            if self.config.rect_win:
                 ones = to_gpu(
                     np.array(m * [np.ones_like(single_window)]).flatten().reshape((window_points, 1, m), order='F'))
                 a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
@@ -1447,31 +1427,28 @@ class Spectrum:
                 a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
 
             # --------- modify data ---------
-            if filter_func:
-                pre_filter = filter_func(self.freq[2])
+            if self.config.filter_func:
+                pre_filter = self.config.filter_func(self.freq[2])
                 filter_mat = to_gpu(
                     np.array(m * [1 / pre_filter]).flatten().reshape((a_w_all_gpu.shape[0], 1, m), order='F'))
                 a_w_all_gpu = filter_mat * a_w_all_gpu
 
-            if random_phase:
-                a_w_all_gpu = add_random_phase(a_w_all_gpu, window_points, self.delta_t, m)
+            if self.config.random_phase:
+                a_w_all_gpu = self.add_random_phase(a_w_all_gpu, window_points)
 
             # --------- calculate spectra ----------
-            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window,
-                                             window, chunk_corr_gpu=chunk_corr_gpu, coherent=coherent,
-                                             random_phase=random_phase, window_points=window_points)
+            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window,
+                                             window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
 
-            if n_chunks == break_after:
+            if n_chunks == self.config.break_after:
                 break
 
-        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
+        self.__store_final_spectra(orders, n_chunks, n_windows)
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson(self, order_in, spectrum_size, f_max, n_reps=10, f_lists=None, backend='opencl', m=10,
-                          m_var=10,
-                          m_stationarity=None, full_import=False, scale_t=1,
-                          sigma_t=0.14, rect_win=False):
+    def calc_spec_poisson(self, n_reps=10, f_lists=None,
+                          sigma_t=0.14):
         """
         Function calculates n_reps spectra using the poisson method and averages over them.
 
@@ -1506,17 +1483,13 @@ class Spectrum:
         -------
 
         """
-        orders = self.process_order(order_in)
+        orders = self.process_order()
 
         all_S = []
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(order_in, spectrum_size, f_max, f_lists=f_lists,
-                                                              backend=backend,
-                                                              m=m, m_var=m_var, m_stationarity=m_stationarity,
-                                                              full_import=full_import,
-                                                              scale_t=scale_t, sigma_t=sigma_t, rect_win=rect_win)
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1527,9 +1500,9 @@ class Spectrum:
 
         return self.freq, self.S, self.S_err
 
-    def setup_data_calc_spec_poisson(self, spectrum_size, f_max, m, f_lists, scale_t):
+    def setup_data_calc_spec_poisson(self, f_lists):
 
-        f_min = f_max / (spectrum_size - 1)
+        f_min = self.config.f_max / (self.config.spectrum_size - 1)
         self.T_window = 1 / f_min
 
         if f_lists is not None:
@@ -1537,21 +1510,18 @@ class Spectrum:
         else:
             f_list = None
 
-        self.delta_t *= scale_t
         if f_list is None:
-            f_list = np.arange(0, f_max + f_min, f_min)
+            f_list = np.arange(0, self.config.f_max + f_min, f_min)
 
         f_max_ind = len(f_list)
         w_list = 2 * np.pi * f_list
         w_list_gpu = to_gpu(w_list)
-        n_windows = int(self.data[-1] * scale_t // (self.T_window * m))
+        n_windows = int(self.data[-1] // (self.T_window * self.config.m))
 
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
-    def calc_spec_poisson_one_spectrum(self, order_in, spectrum_size, f_max, f_lists=None, backend='opencl', m=10,
-                                       m_var=10,
-                                       m_stationarity=None, full_import=False, scale_t=1,
-                                       sigma_t=0.14, rect_win=False):
+    def calc_spec_poisson_one_spectrum(self, f_lists=None,
+                                       sigma_t=0.14):
         """
 
         Parameters
@@ -1586,58 +1556,56 @@ class Spectrum:
 
         """
 
-        orders = self.reset_and_backend_setup(order_in, m, m_var, m_stationarity, backend)
+        orders = self.reset_and_backend_setup()
 
         # -------data setup---------
-        if self.data is None:
-            self.data = self.import_data(self.path, self.group_key, self.dataset, full_import=full_import)
-        if self.delta_t is None:
-            self.delta_t = 1
+        if self.config.data is None:
+            self.data = self.import_data()
+        else:
+            self.data = self.config.data
+        if self.config.delta_t is None:
+            self.config.delta_t = 1
 
         n_chunks = 0
         start_index = 0
         enough_data = True
 
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(spectrum_size, f_max, m, f_lists,
-                                                                                 scale_t)
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(f_lists)
 
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
 
-        self.__prep_f_and_S_arrays(orders, f_list, f_max_ind, m_var, m_stationarity)
+        self.__prep_f_and_S_arrays(orders, f_list, f_max_ind)
 
-        single_window, N_window_full = calc_single_window(self.T_window / scale_t,
-                                                          1 / self.delta_t,
-                                                          sigma_t=sigma_t)
+        single_window, N_window_full = self.calc_single_window()
         for frame_number in tqdm(range(n_windows)):
 
-            windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index,
-                                                                                  self.T_window / scale_t, frame_number,
+            windows, start_index, enough_data = self.__find_datapoints_in_windows(start_index, frame_number,
                                                                                   enough_data)
             if not enough_data:
                 break
 
             n_chunks += 1
 
-            a_w_all = 1j * np.ones((w_list.shape[0], m))
-            a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, m), order='F'))
+            a_w_all = 1j * np.ones((w_list.shape[0], self.config.m))
+            a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
 
             for i, t_clicks in enumerate(windows):
 
                 if t_clicks is not None:
 
-                    t_clicks_minus_start = t_clicks - i * self.T_window / scale_t - m * self.T_window / scale_t * frame_number
+                    t_clicks_minus_start = t_clicks - i * self.T_window - self.config.m * self.T_window * frame_number
 
-                    if rect_win:
+                    if self.config.rect_win:
                         t_clicks_windowed = np.ones_like(t_clicks_minus_start)
                     else:
-                        t_clicks_windowed, single_window, N_window_full = apply_window(self.T_window / scale_t,
+                        t_clicks_windowed, single_window, N_window_full = apply_window(self.T_window,
                                                                                        t_clicks_minus_start,
-                                                                                       1 / self.delta_t,
+                                                                                       1 / self.config.delta_t,
                                                                                        sigma_t=sigma_t)
 
                     # ------ GPU --------
-                    t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start * scale_t)
+                    t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start)
 
                     # ------- uniformly weighted clicks -------
                     # t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
@@ -1655,130 +1623,16 @@ class Spectrum:
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-            self.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
+            self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
-            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window)
+            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window)
 
         assert n_windows == n_chunks, 'n_windows not equal to n_chunks'
 
-        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
+        self.__store_final_spectra(orders, n_chunks, n_windows)
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_mini_bins(self, order_in, T_window, T_bin, f_max, backend='opencl', coherent=False,
-                            m=10, m_var=10, m_stationarity=None, rect_win=False, verbose=False):
-        """
-        DEPRECIATED FUNCTION
-        Parameters
-        ----------
-        order_in: array of int, str ('all')
-            orders of the spectra to be calculated, e.g., [2,4]
-        T_window: int
-            spectra for m windows of window_points is calculated
-        T_bin: int
-            number of points in bin
-        f_max: float
-            maximum frequency of the spectra to be calculated
-        backend: str
-            backend for arrayfire
-        coherent: bool
-            set if second moment should be used instead of cumulant
-        m: int
-            spectra for m windows of window_points is calculated
-        m_var: int
-            number of spectra to calculate the variance from (should be set as high as possible)
-        m_stationarity: int
-            number of spectra after which their mean is stored to varify stationarity of the data
-        rect_win: bool
-            set if no window function should be applied
-        verbose: bool
-            set for more prints
-
-        Returns
-        -------
-
-        """
-        af.set_backend(backend)
-
-        if order_in == 'all':
-            orders = [2, 3, 4]
-        else:
-            orders = order_in
-
-        self.__reset_variables(orders, m, m_var, m_stationarity)
-
-        # -------data setup---------
-        if self.data is None:
-            self.data = self.import_data(self.path, self.group_key, self.dataset)
-        if self.delta_t is None:
-            raise MissingValueError('Missing value for delta_t')
-
-        start_index = 0
-        enough_data = True
-        n_chunks = 0
-        n_windows = int(self.data[-1] // (T_window * m))
-        bins = int(T_window / T_bin)
-        self.delta_t = T_bin
-
-        self.fs = 1 / self.delta_t
-        freq_all_freq = rfftfreq(int(bins), self.delta_t)
-        if verbose:
-            print('Maximum frequency:', np.max(freq_all_freq))
-
-        # ------ Check if f_max is too high ---------
-        f_mask = freq_all_freq <= f_max
-        f_max_ind = sum(f_mask)
-        print('preparing frequency array')
-        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind, m_var, m_stationarity)
-
-        print('preparing window')
-        single_window, _ = cgw(int(bins), self.fs)
-        window = to_gpu(np.array(m * [single_window]).flatten().reshape((bins, 1, m), order='F'))
-
-        print('calculating spectrum')
-        for frame_number in tqdm(range(n_windows)):
-
-            windows, start_index, enough_data = self.__find_datapoints_in_windows(self.data, m, start_index, T_window,
-                                                                                  frame_number, enough_data)
-            if not enough_data:
-                break
-
-            n_chunks += 1
-            chunks = np.ones((bins, m))
-
-            for i, t_clicks in enumerate(windows):
-                t_clicks_minus_start = t_clicks - i * T_window - m * T_window * frame_number
-
-                # --------- binning ----------
-
-                chunk, division = np.histogram(t_clicks_minus_start, bins=bins)
-                # t = division[:-1]
-                chunks[:, i] = chunk
-
-            chunk_gpu = to_gpu(chunks.reshape((bins, 1, m), order='F'))
-
-            if n_chunks == 0:
-                if verbose:
-                    print('chunk shape: ', chunk_gpu.shape[0])
-
-            # ---------count windows-----------
-            n_chunks += 1
-
-            # -------- perform fourier transform ----------
-            if rect_win:
-                ones = to_gpu(
-                    np.array(m * [np.ones_like(single_window)]).flatten().reshape((bins, 1, m), order='F'))
-                a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
-            else:
-                a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
-
-            # --------- calculate spectra ----------
-            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, m, m_var, m_stationarity, single_window,
-                                             window, coherent=coherent)
-
-        self.__store_final_spectra(orders, n_chunks, n_windows, m_var)
-
-        return self.freq, self.S, self.S_err
 
     def __import_spec_data_for_plotting(self, s_data, s_err, order, imag_plot):
 
@@ -1817,7 +1671,7 @@ class Spectrum:
 
         return s_data, s_err
 
-    def plot(self, order_in=(2, 3, 4), f_max=None, f_min=None, f_unit=None, sigma=1, green_alpha=0.3,
+    def plot(self, plot_orders=(2, 3, 4), plot_f_max=None, f_min=None, sigma=1, green_alpha=0.3,
              arcsinh_plot=False,
              arcsinh_const=0.02,
              contours=False, s3_filter=0, s4_filter=0, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
@@ -1830,9 +1684,9 @@ class Spectrum:
 
         Parameters
         ----------
-        order_in : list {2,3,4}
+        plot_orders : list {2,3,4}
             Spectral orders to be plotted. Multiple orders can be chosen.
-        f_max : float
+        plot_f_max : float
             Sets the upper limit of the frequency axis. If set higher than the Nyquist frequency, the
             Nyquist frequency will be chosen as limit.
         f_min : float
@@ -1897,21 +1751,18 @@ class Spectrum:
         Return the matplotlib figure.
         """
 
-        if f_unit is None:
-            f_unit = self.f_unit
-
-        fig_x = 8 * len(order_in)
+        fig_x = 8 * len(plot_orders)
         width_ratios = []
-        for order in order_in:
+        for order in plot_orders:
             if order > 2:
                 width_ratios.append(1.2)
             else:
                 width_ratios.append(1.0)
 
-        fig, ax = plt.subplots(nrows=1, ncols=len(order_in), figsize=(fig_x, 7),
+        fig, ax = plt.subplots(nrows=1, ncols=len(plot_orders), figsize=(fig_x, 7),
                                gridspec_kw={"width_ratios": width_ratios})
 
-        if len(order_in) == 1:
+        if len(plot_orders) == 1:
             ax = [ax]
 
         plt.rc('text', usetex=False)
@@ -1927,7 +1778,7 @@ class Spectrum:
         s_err_plot = {2: None, 3: None, 4: None}
         s_f_plot = {2: None, 3: None, 4: None}
 
-        for axis, order in enumerate(order_in):
+        for axis, order in enumerate(plot_orders):
 
             # -------- S2 ---------
             if order == 2 and ((self.S[order] is not None and not self.S[order].shape[0] == 0) or s2_data is not None):
@@ -1957,11 +1808,11 @@ class Spectrum:
                     diffs = None
                     broken_lims_scaled = None
 
-                if f_max is None:
-                    f_max = s_f_plot[order].max()
+                if plot_f_max is None:
+                    plot_f_max = s_f_plot[order].max()
                 if f_min is None:
                     f_min = s_f_plot[order].min()
-                ax[0].set_xlim([f_min, f_max])
+                ax[0].set_xlim([f_min, plot_f_max])
 
                 if plot_error and (s_err_plot[order] is not None or self.S_err[2] is not None):
                     for i in range(0, 5):
@@ -1973,9 +1824,9 @@ class Spectrum:
                 ax[0].plot(s_f_plot[order], s_data_plot[order], color=[0, 0.5, 0.9], linewidth=3)
 
                 ax[0].tick_params(axis='both', direction='in')
-                ax[0].set_ylabel(r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)", labelpad=13, fontdict={'fontsize': 14})
-                ax[0].set_xlabel(r"$\omega / 2\pi$ (" + f_unit + r")", labelpad=13, fontdict={'fontsize': 14})
-                ax[0].set_title(r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
+                ax[0].set_ylabel(r"$S^{(2)}_z$ (" + self.config.f_unit + r"$^{-1}$)", labelpad=13, fontdict={'fontsize': 14})
+                ax[0].set_xlabel(r"$\omega / 2\pi$ (" + self.config.f_unit + r")", labelpad=13, fontdict={'fontsize': 14})
+                ax[0].set_title(r"$S^{(2)}_z$ (" + self.config.f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
 
                 if broken_lims is not None:
                     ylims = ax[0].get_ylim()
@@ -2051,23 +1902,23 @@ class Spectrum:
                     if contours:
                         ax[axis].contour(x, y, gaussian_filter(z, s_filter), colors='k', linewidths=0.7)
 
-                    if f_max is None:
-                        f_max = s_f_plot[order].max()
+                    if plot_f_max is None:
+                        plot_f_max = s_f_plot[order].max()
                     if f_min is None:
                         f_min = s_f_plot[order].min()
-                    ax[axis].axis([f_min, f_max, f_min, f_max])
+                    ax[axis].axis([f_min, plot_f_max, f_min, plot_f_max])
 
-                    ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + f_unit + r")", fontdict={'fontsize': 14})
-                    ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + f_unit + r")", fontdict={'fontsize': 14})
+                    ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + self.config.f_unit + r")", fontdict={'fontsize': 14})
+                    ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + self.config.f_unit + r")", fontdict={'fontsize': 14})
                     ax[axis].tick_params(axis='both', direction='in')
 
                     if green_alpha == 0:
                         ax[axis].set_title(
-                            r'$S^{(' + f'{order}' + r')}_z $ (' + f_unit + r'$^{-' + f'{order - 1}' + r'}$)',
+                            r'$S^{(' + f'{order}' + r')}_z $ (' + self.config.f_unit + r'$^{-' + f'{order - 1}' + r'}$)',
                             fontdict={'fontsize': 16})
                     else:
                         ax[axis].set_title(
-                            r'$S^{(' + f'{order}' + r')}_z $ (' + f_unit + r'$^{-' + f'{order - 1}' + r'}$) (%i$\sigma$ confidence)' % (
+                            r'$S^{(' + f'{order}' + r')}_z $ (' + self.config.f_unit + r'$^{-' + f'{order - 1}' + r'}$) (%i$\sigma$ confidence)' % (
                                 sigma),
                             fontdict={'fontsize': 16})
                     fig.colorbar(c, ax=(ax[axis]))
@@ -2096,7 +1947,7 @@ class Spectrum:
         return fig
 
     def plot_interactive(self, order, sigma=3, arcsinh_plot=False,
-                         arcsinh_const=0.02, f_unit=None, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
+                         arcsinh_const=0.02, s2_data=None, s2_err=None, s3_data=None, s3_err=None,
                          s4_data=None, s4_err=None, s2_f=None, s3_f=None, s4_f=None, imag_plot=False):
 
         """
@@ -2153,9 +2004,6 @@ class Spectrum:
         Returns a plotly figure.
         """
 
-        if f_unit is None:
-            f_unit = self.f_unit
-
         s_data_plot = {2: None, 3: None, 4: None}
         s_err_plot = {2: None, 3: None, 4: None}
         s_f_plot = {2: None, 3: None, 4: None}
@@ -2190,11 +2038,11 @@ class Spectrum:
                                      name=f'error band ({sigma} sigma)'))
             fig.add_trace(go.Scatter(x=s_f_plot[order], y=s2_err_m[0],
                                      mode='lines'))
-            title = r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)"
+            title = r"$S^{(2)}_z$ (" + self.config.f_unit + r"$^{-1}$)"
             print(title)
             fig.update_layout(title=title,
-                              xaxis_title=r"$\omega / 2\pi$ (" + f_unit + r")",
-                              yaxis_title=r"$S^{(2)}_z$ (" + f_unit + r"$^{-1}$)")
+                              xaxis_title=r"$\omega / 2\pi$ (" + self.config.f_unit + r")",
+                              yaxis_title=r"$S^{(2)}_z$ (" + self.config.f_unit + r"$^{-1}$)")
             fig.show()
 
         if order > 2:
