@@ -1285,7 +1285,7 @@ class Spectrum:
                 start_index = end_index
         return windows, start_index, enough_data
 
-    def calc_spec(self, order_in, T_window, f_max, backend='cpu', scaling_factor=1,
+    def calc_spec(self, order_in, spectrum_size, f_max, backend='cpu', scaling_factor=1,
                   corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                   break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
                   rect_win=False, full_import=True, show_first_frame=True):
@@ -1297,8 +1297,9 @@ class Spectrum:
         ----------
         order_in: array of int, str ('all')
             orders of the spectra to be calculated, e.g., [1,4]
-        T_window: int
-            Spectra for m windows with temporal length T_window are calculated.
+        spectrum_size: int
+            Number of points in one spectrum (Number of frequencies). Be aware, that more then 1000 points for order 3
+            and 4 can be computationally expensive.
         f_max: float
             maximum frequency of the spectra to be calculated
         backend: {'cpu', 'opencl', 'cuda'}
@@ -1359,11 +1360,15 @@ class Spectrum:
             raise MissingValueError('Missing value for delta_t')
 
         n_chunks = 0
-        self.T_window = T_window
+        f_max_actual = 1 / (2 * self.delta_t)
+        window_length_factor = f_max_actual / f_max
+
+        # Spectra for m windows with temporal length T_window are calculated.
+        self.T_window = spectrum_size / (2 * self.delta_t) * window_length_factor
 
         corr_shift /= self.delta_t  # conversion of shift in seconds to shift in dt
 
-        window_points = int(np.round(T_window / self.delta_t))
+        window_points = int(np.round(self.T_window / self.delta_t))
         print('Actual T_window:', window_points * self.delta_t)
         self.window_points = window_points
 
