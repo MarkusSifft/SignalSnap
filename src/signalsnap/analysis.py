@@ -1364,7 +1364,7 @@ class Spectrum:
         window_length_factor = f_max_actual / f_max
 
         # Spectra for m windows with temporal length T_window are calculated.
-        self.T_window = spectrum_size * 2 * self.delta_t * window_length_factor
+        self.T_window = (spectrum_size - 1) * 2 * self.delta_t * window_length_factor
 
         corr_shift /= self.delta_t  # conversion of shift in seconds to shift in dt
 
