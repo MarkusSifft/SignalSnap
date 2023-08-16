@@ -1486,6 +1486,11 @@ class Spectrum:
         -------
 
         """
+        if order_in == 'all':
+            orders = [1, 2, 3, 4]
+        else:
+            orders = order_in
+
         all_S = []
         all_S_err = []
 
@@ -1497,7 +1502,7 @@ class Spectrum:
             all_S.append(S)
             all_S_err.append(S_err)
 
-        for i in order_in:
+        for i in orders:
             self.S[i] = sum([S[i] for S in all_S]) / n_reps
             self.S_err[i] = sum([S_err[i] for S_err in all_S_err]) / n_reps
 
