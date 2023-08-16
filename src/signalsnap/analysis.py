@@ -1567,7 +1567,7 @@ class Spectrum:
             self.delta_t = 1
 
         n_chunks = 0
-        f_min = f_max / spectrum_size
+        f_min = f_max / (spectrum_size - 1)
         self.T_window = 1 / f_min
 
         if f_lists is not None:
