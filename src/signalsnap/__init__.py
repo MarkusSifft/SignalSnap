@@ -31,4 +31,5 @@
 #    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 
-from signalsnap.analysis import *
+from .spectrum_calculator import SpectrumCalculator
+from .spectrum_config import SpectrumConfig

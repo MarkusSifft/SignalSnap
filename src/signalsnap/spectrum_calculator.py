@@ -50,7 +50,7 @@ from scipy.fft import rfftfreq
 from scipy.ndimage.filters import gaussian_filter
 from tqdm.auto import tqdm
 
-from spectrum_config import SpectrumConfig
+from .spectrum_config import SpectrumConfig
 
 
 class MissingValueError(Exception):
@@ -573,7 +573,7 @@ class SpectrumCalculator:
             size of window in points
 
         """
-        first_frame = chunk[:self.window_size]
+        first_frame = chunk[:window_size]
         t = np.arange(0, len(first_frame) * self.config.delta_t, self.config.delta_t)
         plt.figure(figsize=(14, 3))
 
@@ -809,8 +809,8 @@ class SpectrumCalculator:
         self.S_gpu = None
         self.S_err_gpu = None
         self.main_data = None
-        self.corr_data = None
-        self.data = None
+        self.config.corr_data = None
+        self.config.data = None
         self.S_errs = None
         self.S_stationarity_temp = None
         pickle_save(save_path, self)
@@ -1086,7 +1086,7 @@ class SpectrumCalculator:
             elif order == 2:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
 
-                if self.corr_data is not None:
+                if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
                     single_spectrum = self.c2(a_w, a_w_corr) / (
@@ -1099,16 +1099,16 @@ class SpectrumCalculator:
             elif order == 3:
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
                 a_w2 = a_w1
-                a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind))
+                a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
             else:  # order 4
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
 
-                if self.corr_data is not None:
+                if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     if self.config.random_phase:
-                        a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points, self.config.delta_t)
+                        a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points)
 
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
                 else:
@@ -1379,11 +1379,9 @@ class SpectrumCalculator:
         n_chunks = 0
 
         if self.config.corr_data is None and not self.config.corr_default == 'white_noise' and self.config.corr_path is not None:
-            corr_data = self.import_data()
-        elif self.config.corr_data is not None:
-            corr_data = self.config.corr_data
+            self.config.corr_data = self.import_data()
         else:
-            corr_data = None
+            self.config.corr_data = None
 
         window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec()
         m = self.config.m
@@ -1404,8 +1402,8 @@ class SpectrumCalculator:
             if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
                 chunk_corr = np.random.randn(window_points, 1, m)
                 chunk_corr_gpu = to_gpu(chunk_corr)
-            elif self.corr_data is not None:
-                chunk_corr = self.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
+            elif self.config.corr_data is not None:
+                chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
                     (i + 1) * (window_points * m) + self.config.corr_shift)]
                 chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
             else:
