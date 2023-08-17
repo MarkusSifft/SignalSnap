@@ -9,6 +9,73 @@ import numpy as np
 
 
 class SpectrumConfig:
+
+    """
+    Configuration class for spectrum analysis, storing parameters, data, and performing validity checks.
+
+    Parameters
+    ----------
+    path : str, optional
+        Path to h5 file with stored signal. Default is None.
+    group_key : str, optional
+        Group key for h5 file. Default is None.
+    dataset : str, optional
+        Name of the dataset in h5 file. Default is None.
+    delta_t : float, optional
+        Inverse of the sampling rate of the signal. Must be positive. Default is None.
+    data : array_like, optional
+        Signal to be analyzed. Default is None.
+    corr_data : array_like, optional
+        Second signal used for correlation. Default is None.
+
+    Correlation Parameters
+    ----------------------
+    corr_path : str, optional
+        Path to h5 file with second signal for correlation. Default is None.
+    corr_group_key : str, optional
+        Group key for h5 file with correlation signal. Default is None.
+    corr_dataset : str, optional
+        Name of the dataset in h5 file with correlation signal. Default is None.
+    corr_shift : int, optional
+        Non-negative integer or None. Default is 0.
+
+    Frequency Parameters
+    --------------------
+    f_unit : {'Hz', 'kHz', 'MHz', 'GHz', 'THz', 'mHz'}, optional
+        Frequency unit. Default is 'Hz'.
+    f_max : float, optional
+        Upper frequency limit for spectral values calculation. Must be positive. Default is None.
+
+    Computational Parameters
+    ------------------------
+    backend : {'cpu', 'opencl', 'cuda'}, optional
+        Backend for computation. Default is 'cpu'.
+    spectrum_size : int, optional
+        Number of points in a window, must be positive. Default is 100.
+    order_in : str or list of {1, 2, 3, 4}, optional
+        Order for calculation, 'all' or list with numbers between 1 and 4. Default is 'all'.
+
+    Additional Parameters
+    ---------------------
+    filter_func : callable or False, optional
+        Filtering function. Default is False.
+    verbose, coherent, random_phase, rect_win, full_import, show_first_frame : bool, optional
+        Various boolean flags. Defaults are True, False, False, False, True, True respectively.
+    corr_default : {None, 'white noise'}, optional
+        Default is None.
+    break_after, m, m_var, m_stationarity, window_shift : int, optional
+        Various integer parameters with constraints. Defaults are 1e6, 10, 10, None, 1 respectively.
+
+    Raises
+    ------
+    ValueError
+        If any parameter does not meet its constraints.
+
+    Notes
+    -----
+    Ensure that the provided paths, group keys, and dataset names are valid, as this class does not handle file reading.
+    """
+
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None,
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
                  f_unit='Hz', f_max=None, backend='cpu', spectrum_size=100, order_in='all',
