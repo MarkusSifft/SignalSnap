@@ -117,6 +117,8 @@ class SpectrumConfig:
             raise ValueError("filter_func must be a callable function or False.")
         if corr_default not in [None, 'white noise']:
             raise ValueError("corr_default must be None or 'white noise'.")
+        if isinstance(break_after, float) and break_after.is_integer():
+            break_after = int(break_after)
         if not isinstance(break_after, int) or break_after <= 0:
             raise ValueError("break_after must be a positive integer.")
         if not isinstance(m, int) or m < largest_order:

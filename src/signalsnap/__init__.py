@@ -7,3 +7,5 @@
 
 from .spectrum_calculator import SpectrumCalculator
 from .spectrum_config import SpectrumConfig
+from .plot_config import PlotConfig
+from .spectrum_plotter import SpectrumPlotter
