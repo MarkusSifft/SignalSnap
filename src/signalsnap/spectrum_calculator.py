@@ -128,6 +128,34 @@ def c1(a_w):
 
 
 @njit
+def find_start_index_interlaced(data, T_window):
+    """
+    Returns the index of the first datapoint to be contained in the first interlaced window
+
+    Parameters
+    ----------
+    data : array
+        timestamps of detector clicks
+    T_window : float
+        window length in seconds (or unit of choice)
+
+    Returns
+    -------
+
+    """
+    end_time = T_window / 2
+
+    if end_time > data[-1]:
+        raise ValueError("Not even half a window fits your data. Your resolution is either way too high or your data way too short.")
+
+    i = 0
+    while True:
+        if data[i] > end_time:
+            return i - 1
+        i += 1
+
+
+@njit
 def find_end_index(data, start_index, T_window, m, frame_number, j):
     """
 
@@ -151,18 +179,26 @@ def find_end_index(data, start_index, T_window, m, frame_number, j):
 
     """
     end_time = T_window * (m * frame_number + (j + 1))
+    end_time_interlaced = T_window * (m * frame_number + (j + 1)) + T_window / 2
 
-    if data[start_index] > end_time:
-        return start_index
+    if end_time > data[-1] or end_time_interlaced > data[-1]:
+        return -1, -1
 
-    if end_time > data[-1]:
-        return -1
-
-    i = 1
+    i = 0
     while True:
         if data[start_index + i] > end_time:
-            return start_index + i
+            start_index_out = start_index + i
+            break
         i += 1
+
+    i = 0
+    while True:
+        if data[start_index_out + i] > end_time_interlaced:
+            start_index_interlaced_out = start_index_out + i
+            break
+        i += 1
+
+    return start_index_out, start_index_interlaced_out
 
 
 @njit
@@ -1145,7 +1181,7 @@ class SpectrumCalculator:
             if self.config.interlaced_calculation:
                 self.S_err[order] /= 2
 
-    def __find_datapoints_in_windows(self, start_index, frame_number, enough_data):
+    def __find_datapoints_in_windows(self, start_index, start_index_interlaced, frame_number, enough_data):
         """
         Helper function for the calc_spec_poisson function. It locates all click times within a window.
 
@@ -1174,8 +1210,10 @@ class SpectrumCalculator:
         and `self.data` represents the full dataset of time stamps.
         """
         windows = []
+        windows_interlaced = []
         for i in range(self.config.m):
-            end_index = find_end_index(self.data, start_index, self.T_window, self.config.m, frame_number, i)
+            end_index, end_index_interlaced = find_end_index(self.data, start_index,
+                                                             self.T_window, self.config.m, frame_number, i)
             if end_index == -1:
                 enough_data = False
                 break
@@ -1185,7 +1223,14 @@ class SpectrumCalculator:
                 else:
                     windows.append(self.data[start_index:end_index])
                 start_index = end_index
-        return windows, start_index, enough_data
+
+                if start_index_interlaced == end_index_interlaced:
+                    windows_interlaced.append(None)
+                else:
+                    windows_interlaced.append(self.data[start_index_interlaced:end_index_interlaced])
+                start_index_interlaced = end_index_interlaced
+
+        return windows, windows_interlaced, start_index, start_index_interlaced, enough_data
 
     def process_order(self):
         """
@@ -1586,6 +1631,7 @@ class SpectrumCalculator:
 
         n_chunks = 0
         start_index = 0
+        start_index_interlaced = find_start_index_interlaced(self.data, self.T_window)
         enough_data = True
 
         f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(f_lists)
@@ -1600,8 +1646,10 @@ class SpectrumCalculator:
 
         for frame_number in tqdm(range(n_windows)):
 
-            windows, start_index, enough_data = self.__find_datapoints_in_windows(start_index, frame_number,
-                                                                                  enough_data)
+            windows, windows_interlaced, start_index, start_index_interlaced, enough_data = self.__find_datapoints_in_windows(start_index,
+                                                                                                          start_index_interlaced,
+                                                                                                          frame_number,
+                                                                                                          enough_data)
             if not enough_data:
                 break
 
