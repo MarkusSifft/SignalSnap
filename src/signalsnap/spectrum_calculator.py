@@ -1141,12 +1141,9 @@ class SpectrumCalculator:
             self.S[order] = self.S_gpu[order].to_ndarray()
 
             if self.config.interlaced_calculation:
-                number_of_spectra = 2 * n_windows // self.config.m_var
+                number_of_spectra = 2 * n_chunks
             else:
-                number_of_spectra = n_windows // self.config.m_var
-
-            print('n_chunks:', n_chunks)
-            print('number_of_spectra:', number_of_spectra)
+                number_of_spectra = n_chunks
 
             err_real = np.sqrt(np.real(self.S_err[order]) / number_of_spectra)
             err_imag = np.sqrt(np.imag(self.S_err[order]) / number_of_spectra)
