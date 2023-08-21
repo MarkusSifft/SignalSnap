@@ -287,7 +287,7 @@ def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
     # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
     window_full, norm = cgw(N_window_full, 1 / dt_full)
 
-    return window / np.sqrt(norm), window_full, N_window_full
+    return window / np.sqrt(norm), window_full
 
 
 def unit_conversion(f_unit):
@@ -1298,13 +1298,13 @@ class SpectrumCalculator:
         number_of_spectra = n_data_points // (window_points * m + window_points // 2)
         if number_of_spectra < self.config.m_var:
             raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
-                             f"decreasing the resolution of the spectra.")
+                             f"decreasing the resolution of the spectra or the variable m_var.")
 
         if self.config.m_stationarity is not None:
             if number_of_spectra < self.config.m_stationarity:
                 raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
                                  f"to visualize changes in the power spectrum over time. Consider "
-                                 f"decreasing the resolution of the spectra.")
+                                 f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('Actual T_window:', window_points * self.config.delta_t)
         self.window_points = window_points
@@ -1442,7 +1442,7 @@ class SpectrumCalculator:
         return self.freq, self.S, self.S_err
 
     def calc_spec_poisson(self, n_reps=10, f_lists=None,
-                          sigma_t=0.14):
+                          sigma_t=0.14, exp_weighting=True):
         """
         Calculate spectra using the Poisson method and average over `n_reps` repetitions.
 
@@ -1481,7 +1481,7 @@ class SpectrumCalculator:
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t)
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t, exp_weighting=exp_weighting)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1545,7 +1545,7 @@ class SpectrumCalculator:
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
     def calc_spec_poisson_one_spectrum(self, f_lists=None,
-                                       sigma_t=0.14):
+                                       sigma_t=0.14, exp_weighting=True):
         """
         Calculate the Poisson spectrum for one spectrum based on the configuration stored in self.config.
 
@@ -1596,6 +1596,8 @@ class SpectrumCalculator:
         self.__prep_f_and_S_arrays(orders, f_list, f_max_ind)
 
         single_window, N_window_full = self.calc_single_window()
+        self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
+
         for frame_number in tqdm(range(n_windows)):
 
             windows, start_index, enough_data = self.__find_datapoints_in_windows(start_index, frame_number,
@@ -1617,20 +1619,22 @@ class SpectrumCalculator:
                     if self.config.rect_win:
                         t_clicks_windowed = np.ones_like(t_clicks_minus_start)
                     else:
-                        t_clicks_windowed, single_window, N_window_full = apply_window(self.T_window,
-                                                                                       t_clicks_minus_start,
-                                                                                       1 / self.config.delta_t,
-                                                                                       sigma_t=sigma_t)
+                        t_clicks_windowed, single_window = apply_window(self.T_window,
+                                                                        t_clicks_minus_start,
+                                                                        1 / self.config.delta_t,
+                                                                        sigma_t=sigma_t)
 
                     # ------ GPU --------
                     t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start)
 
-                    # ------- uniformly weighted clicks -------
-                    # t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
+                    if not exp_weighting:
+                        # ------- uniformly weighted clicks -------
+                        t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
 
-                    # ------- exponentially weighted clicks -------
-                    exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
-                    t_clicks_windowed_gpu = to_gpu(t_clicks_windowed * exp_random_numbers).as_type(af.Dtype.c64)
+                    else:
+                        # ------- exponentially weighted clicks -------
+                        exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
+                        t_clicks_windowed_gpu = to_gpu(t_clicks_windowed * exp_random_numbers).as_type(af.Dtype.c64)
 
                     temp1 = af.exp(1j * af.matmulNT(w_list_gpu, t_clicks_minus_start_gpu))
                     # temp2 = af.tile(t_clicks_windowed_gpu.T, w_list_gpu.shape[0])
@@ -1640,8 +1644,6 @@ class SpectrumCalculator:
 
                 else:
                     a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
-
-            self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
             self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window)
 
