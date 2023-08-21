@@ -1229,7 +1229,7 @@ class SpectrumCalculator:
         self.__reset_variables(orders)
         return orders
 
-    def setup_data_calc_spec(self):
+    def setup_data_calc_spec(self, orders):
         """
         Set up the data and calculate spectral parameters for the analysis.
 
@@ -1269,18 +1269,42 @@ class SpectrumCalculator:
 
         # Spectra for m windows with temporal length T_window are calculated.
         self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
-
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
-
+        n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
+
+        # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
+        if not window_points * self.config.m + window_points // 2 < n_data_points:
+            original_m = self.config.m
+            original_window_points = window_points
+            m = n_data_points // window_points
+            if m < max(orders):
+                m = max(orders)
+                window_points = n_data_points // m
+                if window_points < 1:
+                    raise ValueError("Not enough data points for the specified configuration.")
+
+            # Inform user if variables have been changed
+            if original_m != m or original_window_points != window_points:
+                print(f"Values have been changed: m = {m}, window_points = {window_points}")
+
+        # Check m_var and m_stationarity
+        number_of_spectra = n_data_points // (window_points * self.config.m + window_points // 2)
+        if number_of_spectra < self.config.m_var:
+            raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
+                             f"decreasing the resolution of the spectra.")
+        if number_of_spectra < self.config.m_stationarity:
+            raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                             f"to visualize changes in the power spectrum over time. Consider "
+                             f"decreasing the resolution of the spectra.")
+
         print('Actual T_window:', window_points * self.config.delta_t)
         self.window_points = window_points
 
-        n_data_points = self.data.shape[0]
-        n_windows = int(np.floor(n_data_points / (self.config.m * window_points)))
+        n_windows = int(np.floor(n_data_points / (m * window_points)))
         n_windows = int(
             np.floor(n_windows - self.config.corr_shift / (
-                    self.config.m * window_points)))  # number of windows is reduced if corr shifted
+                     m * window_points)))  # number of windows is reduced if corr shifted
 
         self.fs = 1 / self.config.delta_t
         freq_all_freq = rfftfreq(int(window_points), self.config.delta_t)
@@ -1291,7 +1315,7 @@ class SpectrumCalculator:
         f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
 
-        return window_points, freq_all_freq, f_mask, f_max_ind, n_windows
+        return m, window_points, freq_all_freq, f_mask, f_max_ind, n_windows
 
     def calc_spec(self):
         """
@@ -1338,63 +1362,71 @@ class SpectrumCalculator:
         else:
             self.config.corr_data = None
 
-        window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec()
-        m = self.config.m
+        m, window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec(orders)
+
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind)
 
-        for i in tqdm(np.arange(0, n_windows - 1 + self.config.window_shift, self.config.window_shift), leave=False):
+        for i in tqdm(np.arange(0, n_windows, 1), leave=False):
 
-            chunk = self.data[int(i * (window_points * m)): int((i + 1) * (window_points * m))]
-            if not self.first_frame_plotted and self.config.show_first_frame:
-                self.plot_first_frame(chunk, window_points)
-                self.first_frame_plotted = True
-
-            chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
-
-            if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
-                chunk_corr = np.random.randn(window_points, 1, m)
-                chunk_corr_gpu = to_gpu(chunk_corr)
-            elif self.config.corr_data is not None:
-                chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
-                    (i + 1) * (window_points * m) + self.config.corr_shift)]
-                chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
+            # Calculate a spectra ones without shift and ones interlaced.
+            if self.config.interlaced_calculation:
+                shift_iterator = [0, window_points//2]
             else:
-                chunk_corr_gpu = None
+                shift_iterator = [0]
 
-            if n_chunks == 0:
-                if self.config.verbose:
-                    print('chunk shape: ', chunk_gpu.shape[0])
+            for window_shift in shift_iterator:
 
-            # ---------count windows-----------
-            n_chunks += 1
+                chunk = self.data[int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
+                if not self.first_frame_plotted and self.config.show_first_frame:
+                    self.plot_first_frame(chunk, window_points)
+                    self.first_frame_plotted = True
 
-            # -------- perform fourier transform ----------
-            if self.config.rect_win:
-                ones = to_gpu(
-                    np.array(m * [np.ones_like(single_window)]).flatten().reshape((window_points, 1, m), order='F'))
-                a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
-            else:
-                a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
 
-            # --------- modify data ---------
-            if self.config.filter_func:
-                pre_filter = self.config.filter_func(self.freq[2])
-                filter_mat = to_gpu(
-                    np.array(m * [1 / pre_filter]).flatten().reshape((a_w_all_gpu.shape[0], 1, m), order='F'))
-                a_w_all_gpu = filter_mat * a_w_all_gpu
+                if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
+                    chunk_corr = np.random.randn(window_points, 1, m)
+                    chunk_corr_gpu = to_gpu(chunk_corr)
+                elif self.config.corr_data is not None:
+                    chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
+                else:
+                    chunk_corr_gpu = None
 
-            if self.config.random_phase:
-                a_w_all_gpu = self.add_random_phase(a_w_all_gpu, window_points)
+                if n_chunks == 0:
+                    if self.config.verbose:
+                        print('chunk shape: ', chunk_gpu.shape[0])
 
-            # --------- calculate spectra ----------
-            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window,
-                                             window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
+                # ---------count windows-----------
+                n_chunks += 1
 
-            if n_chunks == self.config.break_after:
-                break
+                # -------- perform fourier transform ----------
+                if self.config.rect_win:
+                    ones = to_gpu(
+                        np.array(m * [np.ones_like(single_window)]).flatten().reshape((window_points, 1, m), order='F'))
+                    a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
+                else:
+                    a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+
+                # --------- modify data ---------
+                if self.config.filter_func:
+                    pre_filter = self.config.filter_func(self.freq[2])
+                    filter_mat = to_gpu(
+                        np.array(m * [1 / pre_filter]).flatten().reshape((a_w_all_gpu.shape[0], 1, m), order='F'))
+                    a_w_all_gpu = filter_mat * a_w_all_gpu
+
+                if self.config.random_phase:
+                    a_w_all_gpu = self.add_random_phase(a_w_all_gpu, window_points)
+
+                # --------- calculate spectra ----------
+                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window,
+                                                 window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
+
+                if n_chunks == self.config.break_after:
+                    break
 
         self.__store_final_spectra(orders, n_chunks, n_windows)
 

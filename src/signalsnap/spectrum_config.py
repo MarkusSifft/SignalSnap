@@ -80,7 +80,7 @@ class SpectrumConfig:
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
                  f_unit='Hz', f_max=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                 break_after=1e6, m=10, m_var=10, m_stationarity=None, window_shift=1, random_phase=False,
+                 break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True, random_phase=False,
                  rect_win=False, full_import=True, show_first_frame=True):
 
         if path is not None and not isinstance(path, str):
@@ -128,8 +128,8 @@ class SpectrumConfig:
             raise ValueError("m_var must be larger or equal to 2.")
         if m_stationarity is not None and (not isinstance(m_stationarity, int) or m_stationarity <= 0):
             raise ValueError("m_stationarity must be a positive integer or None.")
-        if not isinstance(window_shift, int) or window_shift <= 0:
-            raise ValueError("window_shift must be a positive integer.")
+        if not isinstance(interlaced_calculation, bool):
+            raise ValueError("window_shift must be a boolean value (True or False).")
         if not isinstance(random_phase, bool):
             raise ValueError("random_phase must be a boolean value (True or False).")
         if not isinstance(rect_win, bool):
@@ -171,7 +171,7 @@ class SpectrumConfig:
         self.m = m
         self.m_var = m_var
         self.m_stationarity = m_stationarity
-        self.window_shift = window_shift
+        self.interlaced_calculation = interlaced_calculation
         self.random_phase = random_phase
         self.rect_win = rect_win
         self.full_import = full_import
