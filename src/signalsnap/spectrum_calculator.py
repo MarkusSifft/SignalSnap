@@ -1144,7 +1144,11 @@ class SpectrumCalculator:
                 number_of_spectra = 2 * n_windows // self.config.m_var
             else:
                 number_of_spectra = n_windows // self.config.m_var
-            self.S_err[order] = np.sqrt(self.S_err[order] / number_of_spectra)
+
+            err_real = np.sqrt(np.real(self.S_err[order]) / number_of_spectra)
+            err_imag = np.sqrt(np.imag(self.S_err[order]) / number_of_spectra)
+
+            self.S_err[order] = err_real + 1j * err_imag
 
     def __find_datapoints_in_windows(self, start_index, frame_number, enough_data):
         """
