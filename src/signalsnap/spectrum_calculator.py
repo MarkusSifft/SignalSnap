@@ -1657,3 +1657,13 @@ class SpectrumCalculator:
         from .spectrum_plotter import SpectrumPlotter
         plotter = SpectrumPlotter(self, self.plot_config)
         return plotter.plot()
+
+    def stationarity_plot(self, plot_config: PlotConfig = None):
+        if plot_config:
+            self.plot_config = plot_config
+        elif self.plot_config is None:
+            self.plot_config = PlotConfig()  # Use default plot configuration
+
+        from .spectrum_plotter import SpectrumPlotter
+        plotter = SpectrumPlotter(self, self.plot_config)
+        return plotter.stationarity_plot()
