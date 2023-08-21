@@ -1653,49 +1653,51 @@ class SpectrumCalculator:
             if not enough_data:
                 break
 
-            n_chunks += 1
+            for is_interlaced, frame in zip([False, True], [windows, windows_interlaced]):
 
-            a_w_all = 1j * np.ones((w_list.shape[0], self.config.m))
-            a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
+                n_chunks += 1
 
-            for i, t_clicks in enumerate(windows):
+                a_w_all = 1j * np.ones((w_list.shape[0], self.config.m))
+                a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
 
-                if t_clicks is not None:
+                for i, t_clicks in enumerate(frame):
 
-                    t_clicks_minus_start = t_clicks - i * self.T_window - self.config.m * self.T_window * frame_number
+                    if t_clicks is not None:
 
-                    if self.config.rect_win:
-                        t_clicks_windowed = np.ones_like(t_clicks_minus_start)
+                        t_clicks_minus_start = t_clicks - i * self.T_window - self.config.m * self.T_window * frame_number
+                        if is_interlaced:
+                            t_clicks_minus_start -= self.T_window / 2
+
+                        if self.config.rect_win:
+                            t_clicks_windowed = np.ones_like(t_clicks_minus_start)
+                        else:
+                            t_clicks_windowed, single_window = apply_window(self.T_window,
+                                                                            t_clicks_minus_start,
+                                                                            1 / self.config.delta_t,
+                                                                            sigma_t=sigma_t)
+
+                        # ------ GPU --------
+                        t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start)
+
+                        if not exp_weighting:
+                            # ------- uniformly weighted clicks -------
+                            t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
+
+                        else:
+                            # ------- exponentially weighted clicks -------
+                            exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
+                            t_clicks_windowed_gpu = to_gpu(t_clicks_windowed * exp_random_numbers).as_type(af.Dtype.c64)
+
+                        temp1 = af.exp(1j * af.matmulNT(w_list_gpu, t_clicks_minus_start_gpu))
+                        # temp2 = af.tile(t_clicks_windowed_gpu.T, w_list_gpu.shape[0])
+                        # a_w_all_gpu[:, 0, i] = af.sum(temp1 * temp2, dim=1)
+
+                        a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
+
                     else:
-                        t_clicks_windowed, single_window = apply_window(self.T_window,
-                                                                        t_clicks_minus_start,
-                                                                        1 / self.config.delta_t,
-                                                                        sigma_t=sigma_t)
+                        a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-                    # ------ GPU --------
-                    t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start)
-
-                    if not exp_weighting:
-                        # ------- uniformly weighted clicks -------
-                        t_clicks_windowed_gpu = to_gpu(t_clicks_windowed).as_type(af.Dtype.c64)
-
-                    else:
-                        # ------- exponentially weighted clicks -------
-                        exp_random_numbers = np.random.exponential(1, t_clicks_windowed.shape[0])
-                        t_clicks_windowed_gpu = to_gpu(t_clicks_windowed * exp_random_numbers).as_type(af.Dtype.c64)
-
-                    temp1 = af.exp(1j * af.matmulNT(w_list_gpu, t_clicks_minus_start_gpu))
-                    # temp2 = af.tile(t_clicks_windowed_gpu.T, w_list_gpu.shape[0])
-                    # a_w_all_gpu[:, 0, i] = af.sum(temp1 * temp2, dim=1)
-
-                    a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
-
-                else:
-                    a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
-
-            self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window)
-
-        assert n_windows == n_chunks, 'n_windows not equal to n_chunks'
+                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window)
 
         self.__store_final_spectra(orders, n_chunks, n_windows)
 
