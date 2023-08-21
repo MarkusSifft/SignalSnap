@@ -1652,8 +1652,12 @@ class SpectrumCalculator:
                                                                                                           enough_data)
             if not enough_data:
                 break
+            if self.config.interlaced_calculation:
+                iterator = zip([False, True], [windows, windows_interlaced])
+            else:
+                iterator = zip([False], [windows])
 
-            for is_interlaced, frame in zip([False, True], [windows, windows_interlaced]):
+            for is_interlaced, frame in iterator:
 
                 n_chunks += 1
 
