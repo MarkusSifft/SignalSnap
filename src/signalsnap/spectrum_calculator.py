@@ -833,13 +833,13 @@ class SpectrumCalculator:
                 dim = 2
 
             S_err_gpu_real = self.config.m_var / (self.config.m_var - 1) * (
-                        af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
-                        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
-                    af.real(self.S_errs[order]), dim=dim))
+                    af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
+                    af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
+                af.real(self.S_errs[order]), dim=dim))
             S_err_gpu_imag = self.config.m_var / (self.config.m_var - 1) * (
-                        af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
-                        af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
-                    af.imag(self.S_errs[order]), dim=dim))
+                    af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
+                    af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
+                af.imag(self.S_errs[order]), dim=dim))
 
             self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
 
@@ -1145,6 +1145,9 @@ class SpectrumCalculator:
             else:
                 number_of_spectra = n_windows // self.config.m_var
 
+            print('n_chunks:', n_chunks)
+            print('number_of_spectra:', number_of_spectra)
+
             err_real = np.sqrt(np.real(self.S_err[order]) / number_of_spectra)
             err_imag = np.sqrt(np.imag(self.S_err[order]) / number_of_spectra)
 
@@ -1314,7 +1317,7 @@ class SpectrumCalculator:
         n_windows = int(np.floor(n_data_points / (m * window_points)))
         n_windows = int(
             np.floor(n_windows - self.config.corr_shift / (
-                     m * window_points)))  # number of windows is reduced if corr shifted
+                    m * window_points)))  # number of windows is reduced if corr shifted
 
         self.fs = 1 / self.config.delta_t
         freq_all_freq = rfftfreq(int(window_points), self.config.delta_t)
@@ -1383,13 +1386,14 @@ class SpectrumCalculator:
 
             # Calculate a spectra ones without shift and ones interlaced.
             if self.config.interlaced_calculation:
-                shift_iterator = [0, window_points//2]
+                shift_iterator = [0, window_points // 2]
             else:
                 shift_iterator = [0]
 
             for window_shift in shift_iterator:
 
-                chunk = self.data[int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
+                chunk = self.data[
+                        int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
                 if not self.first_frame_plotted and self.config.show_first_frame:
                     self.plot_first_frame(chunk, window_points)
                     self.first_frame_plotted = True
@@ -1661,6 +1665,3 @@ class SpectrumCalculator:
         from .spectrum_plotter import SpectrumPlotter
         plotter = SpectrumPlotter(self, self.plot_config)
         return plotter.plot()
-
-
-
