@@ -1294,10 +1294,11 @@ class SpectrumCalculator:
             raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
                              f"decreasing the resolution of the spectra.")
 
-        if number_of_spectra < self.config.m_stationarity and self.config.m_stationarity is not None:
-            raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-                             f"to visualize changes in the power spectrum over time. Consider "
-                             f"decreasing the resolution of the spectra.")
+        if self.config.m_stationarity is not None:
+            if number_of_spectra < self.config.m_stationarity:
+                raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                                 f"to visualize changes in the power spectrum over time. Consider "
+                                 f"decreasing the resolution of the spectra.")
 
         print('Actual T_window:', window_points * self.config.delta_t)
         self.window_points = window_points
