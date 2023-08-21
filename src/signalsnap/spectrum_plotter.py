@@ -1,5 +1,5 @@
 from .plot_config import PlotConfig
-from .spectrum_calculator import SpectrumCalculator
+from .analysis import SpectrumCalculator
 from .spectrum_config import SpectrumConfig
 import matplotlib.pyplot as plt
 import numpy as np
