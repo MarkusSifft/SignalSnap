@@ -832,14 +832,14 @@ class SpectrumCalculator:
             else:
                 dim = 2
 
-            S_err_gpu_real = self.config.m_var / (self.config.m_var - 1) * (
+            S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                     af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                     af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
-                af.real(self.S_errs[order]), dim=dim))
-            S_err_gpu_imag = self.config.m_var / (self.config.m_var - 1) * (
+                af.real(self.S_errs[order]), dim=dim)))
+            S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                     af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
                     af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
-                af.imag(self.S_errs[order]), dim=dim))
+                af.imag(self.S_errs[order]), dim=dim)))
 
             self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
 
@@ -1140,15 +1140,10 @@ class SpectrumCalculator:
             self.S_gpu[order] /= n_chunks
             self.S[order] = self.S_gpu[order].to_ndarray()
 
+            self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
+
             if self.config.interlaced_calculation:
-                number_of_spectra = 2 * n_chunks
-            else:
-                number_of_spectra = n_chunks
-
-            err_real = np.sqrt(np.real(self.S_err[order]) / number_of_spectra)
-            err_imag = np.sqrt(np.imag(self.S_err[order]) / number_of_spectra)
-
-            self.S_err[order] = err_real + 1j * err_imag
+                self.S_err[order] /= 2
 
     def __find_datapoints_in_windows(self, start_index, frame_number, enough_data):
         """
