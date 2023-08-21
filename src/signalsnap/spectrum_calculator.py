@@ -319,9 +319,9 @@ def unit_conversion(f_unit):
     return t_unit
 
 
-class Spectrum:
+class SpectrumCalculator:
     """
-    Spectrum class stores signal data, calculated spectra and error of spectral values.
+    SpectrumCalculator class stores signal data, calculated spectra and error of spectral values.
     Allows for the calculation of the polyspectra of the signal and their visualization.
     Also hold methods for saving spectrum objects.
 
@@ -741,7 +741,7 @@ class Spectrum:
 
     def save_spec(self, save_path):
         """
-        Save the Spectrum object to a file, removing pointers and the full dataset before saving.
+        Save the SpectrumCalculator object to a file, removing pointers and the full dataset before saving.
 
         This method clears certain attributes of the object, including GPU data, main data, and config data,
         before storing the object to the specified path.
@@ -776,7 +776,7 @@ class Spectrum:
         Parameters
         ----------
         single_spectrum : array
-            Spectrum of a single frame.
+            SpectrumCalculator of a single frame.
         order : {2, 3, 4}
             Order of the spectra to be calculated.
 
@@ -1292,7 +1292,7 @@ class Spectrum:
             m = self.config.m
 
         # Check m_var and m_stationarity
-        number_of_spectra = n_data_points // (window_points * self.config.m + window_points // 2)
+        number_of_spectra = n_data_points // (window_points * m + window_points // 2)
         if number_of_spectra < self.config.m_var:
             raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
                              f"decreasing the resolution of the spectra.")

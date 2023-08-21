@@ -60,9 +60,9 @@ later the spectra and errors, all freely chosen variables and contains
 the methods for calculating the spectra, plotting and storing.
 
 ```python
-spec = snp.Spectrum(data=y, delta_t=1/fs, f_unit=f_unit)
-T_window = 0.02 # in ms
-f_max = 5e3 # in kHz
+spec = snp.SpectrumCalculator(data=y, delta_t=1 / fs, f_unit=f_unit)
+T_window = 0.02  # in ms
+f_max = 5e3  # in kHz
 f, s, serr = spec.calc_spec(order_in=[2], T_window=T_window, f_max=f_max, backend='cpu')
 ```
 
