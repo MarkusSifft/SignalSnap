@@ -1,5 +1,5 @@
 from .plot_config import PlotConfig
-from .analysis import SpectrumCalculator
+from .analysis import Spectrum
 from .spectrum_config import SpectrumConfig
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 
 class SpectrumPlotter:
-    def __init__(self, spectrum_calculator: SpectrumCalculator, plot_config: PlotConfig):
+    def __init__(self, spectrum_calculator: Spectrum, plot_config: PlotConfig):
         self.spectrum_calculator = spectrum_calculator
         self.plot_config = plot_config
 

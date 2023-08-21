@@ -5,7 +5,7 @@
 # For details, see the LICENSE file in the root of this repository or
 # https://opensource.org/licenses/BSD-3-Clause
 
-from .analysis import SpectrumCalculator
+from .analysis import Spectrum
 from .spectrum_config import SpectrumConfig
 from .plot_config import PlotConfig
 from .spectrum_plotter import SpectrumPlotter
