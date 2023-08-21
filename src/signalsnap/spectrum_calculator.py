@@ -832,16 +832,14 @@ class SpectrumCalculator:
             else:
                 dim = 2
 
-            S_err_gpu_real = af.sqrt(
-                self.config.m_var / (self.config.m_var - 1) * (
+            S_err_gpu_real = self.config.m_var / (self.config.m_var - 1) * (
                         af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                         af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
-                    af.real(self.S_errs[order]), dim=dim)))
-            S_err_gpu_imag = af.sqrt(
-                self.config.m_var / (self.config.m_var - 1) * (
+                    af.real(self.S_errs[order]), dim=dim))
+            S_err_gpu_imag = self.config.m_var / (self.config.m_var - 1) * (
                         af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
                         af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
-                    af.imag(self.S_errs[order]), dim=dim)))
+                    af.imag(self.S_errs[order]), dim=dim))
 
             self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
 
@@ -1034,7 +1032,7 @@ class SpectrumCalculator:
         """
         for order in orders:
             if order == 3:
-                self.freq[order] = f_all_in[:int(f_max_ind // 2)]
+                self.freq[order] = f_all_in[:int((f_max_ind + 1) // 2)]
             else:
                 self.freq[order] = f_all_in
 
@@ -1043,7 +1041,7 @@ class SpectrumCalculator:
             elif order == 2:
                 self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_var)))
             elif order == 3:
-                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_var)))
+                self.S_errs[3] = to_gpu(1j * np.ones(((f_max_ind + 1) // 2, (f_max_ind + 1) // 2, self.config.m_var)))
             elif order == 4:
                 self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_var)))
 
@@ -1054,7 +1052,7 @@ class SpectrumCalculator:
                     self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_stationarity)))
                 elif order == 3:
                     self.S_stationarity_temp[3] = to_gpu(
-                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_stationarity)))
+                        1j * np.ones(((f_max_ind + 1) // 2, (f_max_ind + 1) // 2, self.config.m_stationarity)))
                 elif order == 4:
                     self.S_stationarity_temp[4] = to_gpu(
                         1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
@@ -1142,7 +1140,11 @@ class SpectrumCalculator:
             self.S_gpu[order] /= n_chunks
             self.S[order] = self.S_gpu[order].to_ndarray()
 
-            self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
+            if self.config.interlaced_calculation:
+                number_of_spectra = 2 * n_windows // self.config.m_var
+            else:
+                number_of_spectra = n_windows // self.config.m_var
+            self.S_err[order] = np.sqrt(self.S_err[order] / number_of_spectra)
 
     def __find_datapoints_in_windows(self, start_index, frame_number, enough_data):
         """
