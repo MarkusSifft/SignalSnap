@@ -1032,7 +1032,7 @@ class SpectrumCalculator:
         """
         for order in orders:
             if order == 3:
-                self.freq[order] = f_all_in[:int((f_max_ind + 1) // 2)]
+                self.freq[order] = f_all_in[:int(f_max_ind // 2)]
             else:
                 self.freq[order] = f_all_in
 
@@ -1041,7 +1041,7 @@ class SpectrumCalculator:
             elif order == 2:
                 self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_var)))
             elif order == 3:
-                self.S_errs[3] = to_gpu(1j * np.ones(((f_max_ind + 1) // 2, (f_max_ind + 1) // 2, self.config.m_var)))
+                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_var)))
             elif order == 4:
                 self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_var)))
 
@@ -1052,7 +1052,7 @@ class SpectrumCalculator:
                     self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_stationarity)))
                 elif order == 3:
                     self.S_stationarity_temp[3] = to_gpu(
-                        1j * np.ones(((f_max_ind + 1) // 2, (f_max_ind + 1) // 2, self.config.m_stationarity)))
+                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_stationarity)))
                 elif order == 4:
                     self.S_stationarity_temp[4] = to_gpu(
                         1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
