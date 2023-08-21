@@ -1629,12 +1629,12 @@ class SpectrumCalculator:
         if self.config.delta_t is None:
             self.config.delta_t = 1
 
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(f_lists)
+
         n_chunks = 0
         start_index = 0
         start_index_interlaced = find_start_index_interlaced(self.data, self.T_window)
         enough_data = True
-
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(f_lists)
 
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
