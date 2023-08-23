@@ -1352,7 +1352,7 @@ class SpectrumCalculator:
                                  f"to visualize changes in the power spectrum over time. Consider "
                                  f"decreasing the resolution of the spectra or the variable m_stationary.")
 
-        print('Actual T_window:', window_points * self.config.delta_t, self.t_unit)
+        print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
 
         n_windows = int(np.floor(n_data_points / (m * window_points)))
