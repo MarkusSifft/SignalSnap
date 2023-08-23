@@ -534,7 +534,7 @@ class SpectrumCalculator:
         plt.rc('font', size=12)
         plt.rcParams["axes.axisbelow"] = False
 
-        plt.title('data in first window')
+        plt.title(f'data in first window ({first_frame.shape[0]} points)')
 
         plt.plot(t, first_frame)
 
@@ -1450,10 +1450,6 @@ class SpectrumCalculator:
                     chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
                 else:
                     chunk_corr_gpu = None
-
-                if n_chunks == 0:
-                    if self.config.verbose:
-                        print('chunk shape: ', chunk_gpu.shape[0])
 
                 # ---------count windows-----------
                 n_chunks += 1
