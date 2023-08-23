@@ -355,7 +355,7 @@ def unit_conversion(f_unit):
     return t_unit
 
 
-class SpectrumCalculator:
+class Spectrum:
     """
     SpectrumCalculator class stores signal data, calculated spectra and error of spectral values.
     Allows for the calculation of the polyspectra of the signal and their visualization.
@@ -1311,10 +1311,6 @@ class SpectrumCalculator:
         """
 
         f_max_actual = 1 / (2 * self.config.delta_t)
-
-        if self.config.f_max is not None:
-            self.config.f_max = f_max_actual
-
         window_length_factor = f_max_actual / self.config.f_max
 
         # Spectra for m windows with temporal length T_window are calculated.
