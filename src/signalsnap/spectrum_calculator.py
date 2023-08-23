@@ -1352,7 +1352,7 @@ class SpectrumCalculator:
                                  f"to visualize changes in the power spectrum over time. Consider "
                                  f"decreasing the resolution of the spectra or the variable m_stationary.")
 
-        print('Actual T_window:', window_points * self.config.delta_t)
+        print('Actual T_window:', window_points * self.config.delta_t, self.t_unit)
         self.window_points = window_points
 
         n_windows = int(np.floor(n_data_points / (m * window_points)))
@@ -1363,7 +1363,7 @@ class SpectrumCalculator:
         self.fs = 1 / self.config.delta_t
         freq_all_freq = rfftfreq(int(window_points), self.config.delta_t)
         if self.config.verbose:
-            print('Maximum frequency:', np.max(freq_all_freq))
+            print('Maximum frequency: {:.3e} {}'.format(np.max(freq_all_freq), self.config.f_unit))
 
         # ------ Check if f_max is too high ---------
         f_mask = freq_all_freq <= self.config.f_max
