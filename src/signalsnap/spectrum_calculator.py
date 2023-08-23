@@ -1312,7 +1312,7 @@ class SpectrumCalculator:
 
         f_max_actual = 1 / (2 * self.config.delta_t)
 
-        if self.config.f_max is not None:
+        if self.config.f_max is None:
             self.config.f_max = f_max_actual
 
         window_length_factor = f_max_actual / self.config.f_max
