@@ -147,9 +147,14 @@ class SpectrumPlotter:
 
         if self.plot_config.plot_f_max is None:
             plot_f_max = s_f_plot[order].max()
+        else:
+            plot_f_max = self.plot_config.plot_f_max
         if self.plot_config.f_min is None:
             f_min = s_f_plot[order].min()
-        ax[0].set_xlim([self.plot_config.f_min, self.plot_config.plot_f_max])
+        else:
+            f_min = self.plot_config.f_min
+
+        ax[0].set_xlim([f_min, plot_f_max])
 
         if self.plot_config.plot_error and (
                 s_err_plot[order] is not None or self.spectrum_calculator.S_err[2] is not None):

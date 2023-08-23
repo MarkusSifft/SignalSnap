@@ -1324,9 +1324,6 @@ class SpectrumCalculator:
         window_points = int(np.round(self.T_window / self.config.delta_t))
 
         # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
-        print(window_points * self.config.m + window_points // 2)
-        print(n_data_points)
-
         if not window_points * self.config.m + window_points // 2 < n_data_points:
             original_m = self.config.m
             original_window_points = window_points
