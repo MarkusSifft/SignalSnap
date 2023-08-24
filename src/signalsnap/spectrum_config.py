@@ -127,7 +127,7 @@ class SpectrumConfig:
         if m is not None and (not isinstance(m, int) or m < largest_order):
             raise ValueError(
                 f"m must be larger or equal to the largest number in order_in ({largest_order}), or larger or equal to 4 if 'all' is used.")
-        if m is not None and (not isinstance(m_var, int) or m_var <= 2):
+        if m_var is not None and (not isinstance(m_var, int) or m_var <= 2):
             raise ValueError("m_var must be larger or equal to 2.")
         if m_stationarity is not None and (not isinstance(m_stationarity, int) or m_stationarity <= 0):
             raise ValueError("m_stationarity must be a positive integer or None.")
