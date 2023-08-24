@@ -1469,6 +1469,7 @@ class SpectrumCalculator:
                 print(7)
                 chunk = self.data[
                         int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
+                print(10)
                 if not self.first_frame_plotted and self.config.show_first_frame:
                     self.plot_first_frame(chunk, window_points)
                     self.first_frame_plotted = True
