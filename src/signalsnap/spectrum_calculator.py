@@ -1069,7 +1069,7 @@ class SpectrumCalculator:
           does not include 1.
         """
 
-        f_max_ind = f_all_in.shape[0]
+        f_max_ind = f_all_in.shape[0] - 1
 
         for order in orders:
             if order == 3:
