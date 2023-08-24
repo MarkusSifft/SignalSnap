@@ -121,7 +121,7 @@ class SpectrumConfig:
             break_after = int(break_after)
         if not isinstance(break_after, int) or break_after <= 0:
             raise ValueError("break_after must be a positive integer.")
-        if not isinstance(num_spectra_for_error, int) and num_spectra_for_error > 1:
+        if not isinstance(num_spectra_for_error, int) or num_spectra_for_error < 2:
             raise ValueError(
                 f"num_spectra_for_error must be an integer larger than 1.")
         if m_stationarity is not None and (not isinstance(m_stationarity, int) or m_stationarity <= 0):
