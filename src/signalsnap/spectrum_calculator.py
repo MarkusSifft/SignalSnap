@@ -1322,8 +1322,12 @@ class SpectrumCalculator:
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
+
+        # Set m to be as high as possible for the given m_var in the config if m is not given
         if self.config.m is None:
-            self.config.m = n_data_points // self.config.m_var // window_points
+            self.config.m = int(n_data_points // self.config.m_var // window_points - 0.5)
+            print('self.config.m', self.config.m)
+            print('self.config.m_var', self.config.m_var)
             if self.config.m < max(orders):
                 self.config.m = max(orders)
                 self.config.m_var = n_data_points // (window_points * self.config.m)
