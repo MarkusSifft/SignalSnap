@@ -154,7 +154,7 @@ class SpectrumConfig:
         if not isinstance(turbo_mode, bool):
             raise ValueError("turbo_mode must be a boolean value (True or False).")
 
-        if f_min == 0 and 3 in order_in:
+        if f_min > 0 and 3 in order_in:
             order_in.remove(3)
             print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
 
