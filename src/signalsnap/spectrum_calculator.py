@@ -1335,20 +1335,18 @@ class SpectrumCalculator:
         window_points = int(np.round(self.T_window / self.config.delta_t))
 
         if self.config.turbo_mode:
-            if self.config.m is None:
-                self.config.m = int(n_data_points // window_points - 0.5)
-                m = self.config.m
+            self.config.m = int(n_data_points // window_points - 0.5)
+            m = self.config.m
         else:
             # Set m to be as high as possible for the given m_var in the config if m is not given
-            if self.config.m is None:
+            self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
+            if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
+                self.config.m = 4 * max(orders)
                 self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-                if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
-                    self.config.m = 4 * max(orders)
-                    self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-                    if self.config.m < max(orders):
-                        self.config.m = max(orders)
-                        self.config.m_var = n_data_points // (window_points * self.config.m)
-                    print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
+                if self.config.m < max(orders):
+                    self.config.m = max(orders)
+                    self.config.m_var = n_data_points // (window_points * self.config.m)
+                print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
 
             # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
             if not window_points * self.config.m + window_points // 2 < n_data_points:
