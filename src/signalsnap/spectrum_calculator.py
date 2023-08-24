@@ -1326,11 +1326,13 @@ class SpectrumCalculator:
         # Set m to be as high as possible for the given m_var in the config if m is not given
         if self.config.m is None:
             self.config.m = int(n_data_points // self.config.m_var // window_points - 0.5)
-            print('self.config.m', self.config.m)
-            print('self.config.m_var', self.config.m_var)
-            if self.config.m < max(orders):
-                self.config.m = max(orders)
-                self.config.m_var = n_data_points // (window_points * self.config.m)
+            if self.config.m < self.config.m_var:
+                diff = self.config.m - self.config.m_var
+                self.config.m -= diff // 2
+                self.config.m_var += diff // 2
+                if self.config.m < max(orders):
+                    self.config.m = max(orders)
+                    self.config.m_var = n_data_points // (window_points * self.config.m)
                 print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
 
         # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
