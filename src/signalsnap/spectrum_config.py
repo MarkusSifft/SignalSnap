@@ -9,7 +9,6 @@ import numpy as np
 
 
 class SpectrumConfig:
-
     """
     Configuration class for spectrum analysis, storing parameters, data, and performing validity checks.
 
@@ -83,7 +82,8 @@ class SpectrumConfig:
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
                  f_unit='Hz', f_max=None, f_min=0, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                 break_after=1e6, m=None, m_var=20, m_stationarity=None, interlaced_calculation=True, random_phase=False,
+                 break_after=1e6, m=20, m_var=0, m_stationarity=None, interlaced_calculation=True,
+                 random_phase=False,
                  rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
 
         if path is not None and not isinstance(path, str):
@@ -127,7 +127,7 @@ class SpectrumConfig:
         if m is not None and (not isinstance(m, int) or m < largest_order):
             raise ValueError(
                 f"m must be larger or equal to the largest number in order_in ({largest_order}), or larger or equal to 4 if 'all' is used.")
-        if not isinstance(m_var, int) or m_var <= 2:
+        if m is not None and (not isinstance(m_var, int) or m_var <= 2):
             raise ValueError("m_var must be larger or equal to 2.")
         if m_stationarity is not None and (not isinstance(m_stationarity, int) or m_stationarity <= 0):
             raise ValueError("m_stationarity must be a positive integer or None.")
@@ -153,6 +153,10 @@ class SpectrumConfig:
             raise ValueError("coherent must be a boolean value (True or False).")
         if not isinstance(turbo_mode, bool):
             raise ValueError("turbo_mode must be a boolean value (True or False).")
+
+        if f_min == 0 and 3 in order_in:
+            order_in.remove(3)
+            print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
 
         self.path = path
         self.group_key = group_key
