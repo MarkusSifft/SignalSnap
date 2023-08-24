@@ -1329,7 +1329,8 @@ class SpectrumCalculator:
 
         if self.config.turbo_mode:
             if self.config.m is None:
-                m = int(n_data_points // window_points - 0.5)
+                self.config.m = int(n_data_points // window_points - 0.5)
+                m = self.config.m
         else:
             # Set m to be as high as possible for the given m_var in the config if m is not given
             if self.config.m is None:
