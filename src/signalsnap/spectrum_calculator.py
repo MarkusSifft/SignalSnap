@@ -1329,7 +1329,7 @@ class SpectrumCalculator:
             if self.config.m < self.config.m_var:
                 diff = self.config.m - self.config.m_var
                 self.config.m -= diff // 2
-                self.config.m_var += diff // 2
+                self.config.m_var += diff // 2 - 1
                 if self.config.m < max(orders):
                     self.config.m = max(orders)
                     self.config.m_var = n_data_points // (window_points * self.config.m)
