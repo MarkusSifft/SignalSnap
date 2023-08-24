@@ -1069,7 +1069,7 @@ class SpectrumCalculator:
           does not include 1.
         """
 
-        f_max_ind = f_all_in.shape[0] - 1
+        f_max_ind = f_all_in.shape[0]
 
         for order in orders:
             if order == 3:
@@ -1451,7 +1451,7 @@ class SpectrumCalculator:
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
-        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind:])
+        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind])
 
         for i in tqdm(np.arange(0, n_windows, 1), leave=False):
 
