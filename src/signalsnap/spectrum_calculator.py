@@ -1074,7 +1074,7 @@ class SpectrumCalculator:
 
         for order in orders:
             if order == 3:
-                self.freq[order] = f_all_in[int(f_max_ind // 2)]
+                self.freq[order] = f_all_in[:int(f_max_ind // 2)]
             else:
                 self.freq[order] = f_all_in
 
