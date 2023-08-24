@@ -1392,10 +1392,12 @@ class SpectrumCalculator:
         # ------ Check if f_max is too high ---------
         f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
+        print('f_max_ind:', f_max_ind)
 
         # ------ Find index of f_min --------
         f_mask = freq_all_freq < self.config.f_min
         f_min_ind = sum(f_mask)
+        print('f_min_ind:', f_min_ind)
 
         return m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_spectra
 
