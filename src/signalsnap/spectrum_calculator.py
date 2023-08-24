@@ -1450,8 +1450,9 @@ class SpectrumCalculator:
         m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
 
         single_window, _ = cgw(int(window_points), self.fs)
+        print(4)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
-
+        print(3)
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind])
         print(1)
 
