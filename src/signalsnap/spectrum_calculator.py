@@ -527,7 +527,7 @@ class SpectrumCalculator:
         The inverse sampling rate of the signal (`delta_t`) is retrieved from the `config` class within the method.
         """
         first_frame = chunk[:window_size]
-        t = np.arange(0, len(first_frame) * self.config.delta_t, self.config.delta_t)
+        t = np.arange(len(first_frame)) * self.config.delta_t
         plt.figure(figsize=(14, 3))
 
         plt.rc('text', usetex=False)
