@@ -1394,7 +1394,7 @@ class SpectrumCalculator:
         f_max_ind = sum(f_mask)
 
         # ------ Find index of f_min --------
-        f_mask = freq_all_freq <= self.config.f_min
+        f_mask = freq_all_freq < self.config.f_min
         f_min_ind = sum(f_mask)
 
         return m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_spectra
