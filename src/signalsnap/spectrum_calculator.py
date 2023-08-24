@@ -1324,7 +1324,7 @@ class SpectrumCalculator:
         if self.config.f_max is None:
             self.config.f_max = f_max_actual
 
-        window_length_factor = (f_max_actual - self.config.f_min) / self.config.f_max
+        window_length_factor = f_max_actual / (self.config.f_max - self.config.f_min)
 
         # Spectra for m windows with temporal length T_window are calculated.
         self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
