@@ -1512,7 +1512,7 @@ class SpectrumCalculator:
 
                 # --------- calculate spectra ----------
                 print(5)
-                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window,
+                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
                                                  window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
 
                 if n_chunks == self.config.break_after:
