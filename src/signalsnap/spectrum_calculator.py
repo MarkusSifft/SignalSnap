@@ -1322,8 +1322,12 @@ class SpectrumCalculator:
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
-        self.config.m = n_data_points // self.config.num_spectra_for_error // window_points
-        self.config.m_var = self.config.num_spectra_for_error
+        if self.config.m is None:
+            self.config.m = n_data_points // self.config.m_var // window_points
+            if self.config.m < max(orders):
+                self.config.m = max(orders)
+                self.config.m_var = n_data_points // (window_points * self.config.m)
+                print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
 
         # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
         if not window_points * self.config.m + window_points // 2 < n_data_points:

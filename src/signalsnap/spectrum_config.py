@@ -80,7 +80,7 @@ class SpectrumConfig:
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
                  f_unit='Hz', f_max=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                 break_after=1e6, num_spectra_for_error=20, m_stationarity=None, interlaced_calculation=True, random_phase=False,
+                 break_after=1e6, m=None, m_var=20, m_stationarity=None, interlaced_calculation=True, random_phase=False,
                  rect_win=False, full_import=True, show_first_frame=True):
 
         if path is not None and not isinstance(path, str):
@@ -121,9 +121,11 @@ class SpectrumConfig:
             break_after = int(break_after)
         if not isinstance(break_after, int) or break_after <= 0:
             raise ValueError("break_after must be a positive integer.")
-        if not isinstance(num_spectra_for_error, int) or num_spectra_for_error < 2:
+        if m is not None and not isinstance(m, int) or m < largest_order:
             raise ValueError(
-                f"num_spectra_for_error must be an integer larger than 1.")
+                f"m must be larger or equal to the largest number in order_in ({largest_order}), or larger or equal to 4 if 'all' is used.")
+        if not isinstance(m_var, int) or m_var <= 2:
+            raise ValueError("m_var must be larger or equal to 2.")
         if m_stationarity is not None and (not isinstance(m_stationarity, int) or m_stationarity <= 0):
             raise ValueError("m_stationarity must be a positive integer or None.")
         if not isinstance(interlaced_calculation, bool):
@@ -166,9 +168,8 @@ class SpectrumConfig:
         self.coherent = coherent
         self.corr_default = corr_default
         self.break_after = break_after
-        self.num_spectra_for_error = num_spectra_for_error
-        self.m = None
-        self.m_var = None
+        self.m = m
+        self.m_var = m_var
         self.m_stationarity = m_stationarity
         self.interlaced_calculation = interlaced_calculation
         self.random_phase = random_phase
