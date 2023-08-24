@@ -121,7 +121,7 @@ class SpectrumConfig:
             break_after = int(break_after)
         if not isinstance(break_after, int) or break_after <= 0:
             raise ValueError("break_after must be a positive integer.")
-        if m is not None and not isinstance(m, int) or m < largest_order:
+        if m is not None and (not isinstance(m, int) or m < largest_order):
             raise ValueError(
                 f"m must be larger or equal to the largest number in order_in ({largest_order}), or larger or equal to 4 if 'all' is used.")
         if not isinstance(m_var, int) or m_var <= 2:
