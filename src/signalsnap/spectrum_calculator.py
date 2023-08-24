@@ -1327,7 +1327,7 @@ class SpectrumCalculator:
         window_length_factor = f_max_actual / (self.config.f_max - self.config.f_min)
 
         # Spectra for m windows with temporal length T_window are calculated.
-        self.T_window = (self.config.spectrum_size) * 2 * self.config.delta_t * window_length_factor
+        self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
@@ -1453,6 +1453,7 @@ class SpectrumCalculator:
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind])
+        print(1)
 
         for i in tqdm(np.arange(0, n_windows, 1), leave=False):
 
@@ -1461,7 +1462,7 @@ class SpectrumCalculator:
                 shift_iterator = [0, window_points // 2]
             else:
                 shift_iterator = [0]
-
+            print(2)
             for window_shift in shift_iterator:
 
                 chunk = self.data[
