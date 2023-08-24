@@ -1327,7 +1327,7 @@ class SpectrumCalculator:
         window_length_factor = f_max_actual / (self.config.f_max - self.config.f_min)
 
         # Spectra for m windows with temporal length T_window are calculated.
-        self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
+        self.T_window = (self.config.spectrum_size) * 2 * self.config.delta_t * window_length_factor
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
