@@ -1038,7 +1038,7 @@ class SpectrumCalculator:
 
             self.__store_single_spectrum(single_spectrum, order)
 
-    def __prep_f_and_S_arrays(self, orders, f_all_in, f_max_ind):
+    def __prep_f_and_S_arrays(self, orders, f_all_in):
         """
         Helper function to calculate the frequency array and initialize arrays for the storage of spectra and errors.
 
@@ -1068,9 +1068,12 @@ class SpectrumCalculator:
         - The print statement at the end indicates the number of points if the order list contains more than one item and
           does not include 1.
         """
+
+        f_max_ind = f_all_in.shape[0]
+
         for order in orders:
             if order == 3:
-                self.freq[order] = f_all_in[:int(f_max_ind // 2)]
+                self.freq[order] = f_all_in[int(f_max_ind // 2)]
             else:
                 self.freq[order] = f_all_in
 
@@ -1320,7 +1323,7 @@ class SpectrumCalculator:
         if self.config.f_max is None:
             self.config.f_max = f_max_actual
 
-        window_length_factor = f_max_actual / self.config.f_max
+        window_length_factor = (f_max_actual - self.config.f_min) / self.config.f_max
 
         # Spectra for m windows with temporal length T_window are calculated.
         self.T_window = (self.config.spectrum_size - 1) * 2 * self.config.delta_t * window_length_factor
@@ -1390,7 +1393,11 @@ class SpectrumCalculator:
         f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
 
-        return m, window_points, freq_all_freq, f_mask, f_max_ind, n_spectra
+        # ------ Find index of f_min --------
+        f_mask = freq_all_freq <= self.config.f_min
+        f_min_ind = sum(f_mask)
+
+        return m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_spectra
 
     def calc_spec(self):
         """
@@ -1437,12 +1444,12 @@ class SpectrumCalculator:
         else:
             self.config.corr_data = None
 
-        m, window_points, freq_all_freq, f_mask, f_max_ind, n_windows = self.setup_data_calc_spec(orders)
+        m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
 
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
-        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_mask], f_max_ind)
+        self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind:])
 
         for i in tqdm(np.arange(0, n_windows, 1), leave=False):
 

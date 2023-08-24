@@ -81,7 +81,7 @@ class SpectrumConfig:
 
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None,
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
-                 f_unit='Hz', f_max=None, backend='cpu', spectrum_size=100, order_in='all',
+                 f_unit='Hz', f_max=None, f_min=0, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=None, m_var=20, m_stationarity=None, interlaced_calculation=True, random_phase=False,
                  rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
@@ -142,7 +142,9 @@ class SpectrumConfig:
         if not isinstance(show_first_frame, bool):
             raise ValueError("show_first_frame must be a boolean value (True or False).")
         if f_max is not None and (not isinstance(f_max, (float, int)) or f_max <= 0):
-            raise ValueError("f_max must be a positive float or None.")
+            raise ValueError("f_max must be a positive number or None.")
+        if not isinstance(f_min, (float, int)) or f_min <= 0:
+            raise ValueError("f_min must be a positive number or 0.")
         if corr_shift is not None and (not isinstance(corr_shift, int) or corr_shift < 0):
             raise ValueError("corr_shift must be a non-negative integer or None.")
         if not isinstance(verbose, bool):
@@ -167,6 +169,7 @@ class SpectrumConfig:
         self.spectrum_size = spectrum_size
         self.order_in = order_in
         self.f_max = f_max
+        self.f_min = f_min
         self.corr_shift = corr_shift
         self.filter_func = filter_func
         self.verbose = verbose
