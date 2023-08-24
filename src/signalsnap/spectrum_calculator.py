@@ -836,55 +836,57 @@ class SpectrumCalculator:
         else:
             self.S_gpu[order] += single_spectrum
 
-        if order == 1:
-            self.S_errs[order][0, self.err_counter[order]] = single_spectrum
-        elif order == 2:
-            self.S_errs[order][:, self.err_counter[order]] = single_spectrum
-        else:
-            self.S_errs[order][:, :, self.err_counter[order]] = single_spectrum
-        self.err_counter[order] += 1
+        if not self.config.turbo_mode:
 
-        if self.config.m_stationarity is not None:
             if order == 1:
-                self.S_stationarity_temp[order][0, self.stationarity_counter[order]] = single_spectrum
+                self.S_errs[order][0, self.err_counter[order]] = single_spectrum
             elif order == 2:
-                self.S_stationarity_temp[order][:, self.stationarity_counter[order]] = single_spectrum
+                self.S_errs[order][:, self.err_counter[order]] = single_spectrum
             else:
-                self.S_stationarity_temp[order][:, :, self.stationarity_counter[order]] = single_spectrum
-            self.stationarity_counter[order] += 1
+                self.S_errs[order][:, :, self.err_counter[order]] = single_spectrum
+            self.err_counter[order] += 1
 
-            if self.stationarity_counter[order] % self.config.m_stationarity == 0:
+            if self.config.m_stationarity is not None:
                 if order == 1:
-                    self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
+                    self.S_stationarity_temp[order][0, self.stationarity_counter[order]] = single_spectrum
                 elif order == 2:
-                    self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
+                    self.S_stationarity_temp[order][:, self.stationarity_counter[order]] = single_spectrum
                 else:
-                    self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=2).to_ndarray())
-                self.stationarity_counter[order] = 0
+                    self.S_stationarity_temp[order][:, :, self.stationarity_counter[order]] = single_spectrum
+                self.stationarity_counter[order] += 1
 
-        if self.err_counter[order] % self.config.m_var == 0:
-            if order == 1 or order == 2:
-                dim = 1
-            else:
-                dim = 2
+                if self.stationarity_counter[order] % self.config.m_stationarity == 0:
+                    if order == 1:
+                        self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
+                    elif order == 2:
+                        self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=1).to_ndarray())
+                    else:
+                        self.S_stationarity[order].append(af.mean(self.S_stationarity_temp[order], dim=2).to_ndarray())
+                    self.stationarity_counter[order] = 0
 
-            S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
-                    af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
-                    af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
-                af.real(self.S_errs[order]), dim=dim)))
-            S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
-                    af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
-                    af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
-                af.imag(self.S_errs[order]), dim=dim)))
+            if self.err_counter[order] % self.config.m_var == 0:
+                if order == 1 or order == 2:
+                    dim = 1
+                else:
+                    dim = 2
 
-            self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
+                S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                        af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
+                        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
+                    af.real(self.S_errs[order]), dim=dim)))
+                S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                        af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
+                        af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
+                    af.imag(self.S_errs[order]), dim=dim)))
 
-            if self.S_err[order] is None:
-                self.S_err[order] = self.S_err_gpu.to_ndarray()
-            else:
-                self.S_err[order] += self.S_err_gpu.to_ndarray()
+                self.S_err_gpu = S_err_gpu_real + 1j * S_err_gpu_imag
 
-            self.err_counter[order] = 0
+                if self.S_err[order] is None:
+                    self.S_err[order] = self.S_err_gpu.to_ndarray()
+                else:
+                    self.S_err[order] += self.S_err_gpu.to_ndarray()
+
+                self.err_counter[order] = 0
 
     def calc_overlap(self, t_unit=None, imag=False, scale_t=1):
 
@@ -1072,26 +1074,28 @@ class SpectrumCalculator:
             else:
                 self.freq[order] = f_all_in
 
-            if order == 1:
-                self.S_errs[1] = to_gpu(1j * np.ones((1, self.config.m_var)))
-            elif order == 2:
-                self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_var)))
-            elif order == 3:
-                self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_var)))
-            elif order == 4:
-                self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_var)))
+            if not self.config.turbo_mode:
 
-            if self.config.m_stationarity is not None:
                 if order == 1:
-                    self.S_stationarity_temp[1] = to_gpu(1j * np.ones((1, self.config.m_stationarity)))
+                    self.S_errs[1] = to_gpu(1j * np.ones((1, self.config.m_var)))
                 elif order == 2:
-                    self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_stationarity)))
+                    self.S_errs[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_var)))
                 elif order == 3:
-                    self.S_stationarity_temp[3] = to_gpu(
-                        1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_stationarity)))
+                    self.S_errs[3] = to_gpu(1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_var)))
                 elif order == 4:
-                    self.S_stationarity_temp[4] = to_gpu(
-                        1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
+                    self.S_errs[4] = to_gpu(1j * np.ones((f_max_ind, f_max_ind, self.config.m_var)))
+
+                if self.config.m_stationarity is not None:
+                    if order == 1:
+                        self.S_stationarity_temp[1] = to_gpu(1j * np.ones((1, self.config.m_stationarity)))
+                    elif order == 2:
+                        self.S_stationarity_temp[2] = to_gpu(1j * np.ones((f_max_ind, self.config.m_stationarity)))
+                    elif order == 3:
+                        self.S_stationarity_temp[3] = to_gpu(
+                            1j * np.ones((f_max_ind // 2, f_max_ind // 2, self.config.m_stationarity)))
+                    elif order == 4:
+                        self.S_stationarity_temp[4] = to_gpu(
+                            1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
 
         if not 1 in orders or not len(orders) == 1:
             print('Number of points: ' + str(len(self.freq[2])))
@@ -1323,45 +1327,49 @@ class SpectrumCalculator:
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
 
-        # Set m to be as high as possible for the given m_var in the config if m is not given
-        if self.config.m is None:
-            self.config.m = int(n_data_points // self.config.m_var // window_points - 0.5)
-            if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
-                self.config.m = 4 * max(orders)
-                self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-                if self.config.m < max(orders):
-                    self.config.m = max(orders)
-                    self.config.m_var = n_data_points // (window_points * self.config.m)
-                print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
-
-        # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
-        if not window_points * self.config.m + window_points // 2 < n_data_points:
-            original_m = self.config.m
-            original_window_points = window_points
-            m = n_data_points // window_points
-            if m < max(orders):
-                m = max(orders)
-                window_points = n_data_points // m
-                if window_points < 1:
-                    raise ValueError("Not enough data points for the specified configuration.")
-
-            # Inform user if variables have been changed
-            if original_m != m or original_window_points != window_points:
-                print(f"Values have been changed: m = {m}, window_points = {window_points}")
+        if self.config.turbo_mode:
+            if self.config.m is None:
+                self.config.m = int(n_data_points // window_points - 0.5)
         else:
-            m = self.config.m
+            # Set m to be as high as possible for the given m_var in the config if m is not given
+            if self.config.m is None:
+                self.config.m = int(n_data_points // self.config.m_var // window_points - 0.5)
+                if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
+                    self.config.m = 4 * max(orders)
+                    self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
+                    if self.config.m < max(orders):
+                        self.config.m = max(orders)
+                        self.config.m_var = n_data_points // (window_points * self.config.m)
+                    print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
 
-        # Check m_var and m_stationarity
-        number_of_spectra = n_data_points // (window_points * m + window_points // 2)
-        if number_of_spectra < self.config.m_var:
-            raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
-                             f"decreasing the resolution of the spectra or the variable m_var.")
+            # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
+            if not window_points * self.config.m + window_points // 2 < n_data_points:
+                original_m = self.config.m
+                original_window_points = window_points
+                m = n_data_points // window_points
+                if m < max(orders):
+                    m = max(orders)
+                    window_points = n_data_points // m
+                    if window_points < 1:
+                        raise ValueError("Not enough data points for the specified configuration.")
 
-        if self.config.m_stationarity is not None:
-            if number_of_spectra < self.config.m_stationarity:
-                raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-                                 f"to visualize changes in the power spectrum over time. Consider "
-                                 f"decreasing the resolution of the spectra or the variable m_stationary.")
+                # Inform user if variables have been changed
+                if original_m != m or original_window_points != window_points:
+                    print(f"Values have been changed: m = {m}, window_points = {window_points}")
+            else:
+                m = self.config.m
+
+            # Check m_var and m_stationarity
+            number_of_spectra = n_data_points // (window_points * m + window_points // 2)
+            if number_of_spectra < self.config.m_var:
+                raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
+                                 f"decreasing the resolution of the spectra or the variable m_var.")
+
+            if self.config.m_stationarity is not None:
+                if number_of_spectra < self.config.m_stationarity:
+                    raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                                     f"to visualize changes in the power spectrum over time. Consider "
+                                     f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
