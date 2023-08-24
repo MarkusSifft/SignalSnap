@@ -1466,14 +1466,15 @@ class SpectrumCalculator:
             print(2)
             for window_shift in shift_iterator:
 
+                print(7)
                 chunk = self.data[
                         int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
                 if not self.first_frame_plotted and self.config.show_first_frame:
                     self.plot_first_frame(chunk, window_points)
                     self.first_frame_plotted = True
-
+                print(8)
                 chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
-
+                print(9)
                 if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
                     chunk_corr = np.random.randn(window_points, 1, m)
                     chunk_corr_gpu = to_gpu(chunk_corr)
@@ -1486,6 +1487,7 @@ class SpectrumCalculator:
 
                 # ---------count windows-----------
                 n_chunks += 1
+                print(6)
 
                 # -------- perform fourier transform ----------
                 if self.config.rect_win:
