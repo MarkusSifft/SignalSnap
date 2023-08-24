@@ -1302,7 +1302,7 @@ class SpectrumCalculator:
             Mask array for frequencies less than or equal to `self.config.f_max`.
         f_max_ind : int
             Index corresponding to the maximum frequency.
-        n_windows : int
+        n_spectra : int
             Number of windows for spectral analysis, considering shifts and overlaps.
 
         See Also
@@ -1322,6 +1322,8 @@ class SpectrumCalculator:
         self.config.corr_shift /= self.config.delta_t  # conversion of shift in seconds to shift in dt
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
+        self.config.m = n_data_points // self.config.num_spectra_for_error // window_points
+        self.config.m_var = self.config.num_spectra_for_error
 
         # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
         if not window_points * self.config.m + window_points // 2 < n_data_points:
@@ -1355,9 +1357,9 @@ class SpectrumCalculator:
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
 
-        n_windows = int(np.floor(n_data_points / (m * window_points)))
-        n_windows = int(
-            np.floor(n_windows - self.config.corr_shift / (
+        n_spectra = int(np.floor(n_data_points / (m * window_points)))
+        n_spectra = int(
+            np.floor(n_spectra - self.config.corr_shift / (
                     m * window_points)))  # number of windows is reduced if corr shifted
 
         self.fs = 1 / self.config.delta_t
@@ -1369,7 +1371,7 @@ class SpectrumCalculator:
         f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
 
-        return m, window_points, freq_all_freq, f_mask, f_max_ind, n_windows
+        return m, window_points, freq_all_freq, f_mask, f_max_ind, n_spectra
 
     def calc_spec(self):
         """
