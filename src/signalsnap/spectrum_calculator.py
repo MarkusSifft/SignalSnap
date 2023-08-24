@@ -1395,12 +1395,10 @@ class SpectrumCalculator:
         # ------ Check if f_max is too high ---------
         f_mask = freq_all_freq <= self.config.f_max
         f_max_ind = sum(f_mask)
-        print('f_max_ind:', f_max_ind)
 
         # ------ Find index of f_min --------
         f_mask = freq_all_freq < self.config.f_min
         f_min_ind = sum(f_mask)
-        print('f_min_ind:', f_min_ind)
 
         return m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_spectra
 
@@ -1452,11 +1450,9 @@ class SpectrumCalculator:
         m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
 
         single_window, _ = cgw(int(window_points), self.fs)
-        print(4)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
-        print(3)
+
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind])
-        print(1)
 
         for i in tqdm(np.arange(0, n_windows, 1), leave=False):
 
@@ -1465,19 +1461,18 @@ class SpectrumCalculator:
                 shift_iterator = [0, window_points // 2]
             else:
                 shift_iterator = [0]
-            print(2)
+
             for window_shift in shift_iterator:
 
-                print(7)
                 chunk = self.data[
                         int(i * (window_points * m) + window_shift): int((i + 1) * (window_points * m) + window_shift)]
-                print(10)
+
                 if not self.first_frame_plotted and self.config.show_first_frame:
                     self.plot_first_frame(chunk, window_points)
                     self.first_frame_plotted = True
-                print(8)
+
                 chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
-                print(9)
+
                 if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
                     chunk_corr = np.random.randn(window_points, 1, m)
                     chunk_corr_gpu = to_gpu(chunk_corr)
@@ -1490,7 +1485,6 @@ class SpectrumCalculator:
 
                 # ---------count windows-----------
                 n_chunks += 1
-                print(6)
 
                 # -------- perform fourier transform ----------
                 if self.config.rect_win:
@@ -1511,7 +1505,6 @@ class SpectrumCalculator:
                     a_w_all_gpu = self.add_random_phase(a_w_all_gpu, window_points)
 
                 # --------- calculate spectra ----------
-                print(5)
                 self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
                                                  window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
 
