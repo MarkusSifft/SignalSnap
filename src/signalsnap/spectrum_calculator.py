@@ -1467,6 +1467,9 @@ class SpectrumCalculator:
                     self.plot_first_frame(chunk, window_points)
                     self.first_frame_plotted = True
 
+                if not chunk.shape[0] == window_points * m:
+                    break
+
                 chunk_gpu = to_gpu(chunk.reshape((window_points, 1, m), order='F'))
 
                 if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
