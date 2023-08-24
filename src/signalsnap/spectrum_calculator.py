@@ -1328,7 +1328,7 @@ class SpectrumCalculator:
             self.config.m = int(n_data_points // self.config.m_var // window_points - 0.5)
             if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
                 self.config.m = 4 * max(orders)
-                self.config.m_var = n_data_points // (window_points * (self.config.m + 0.5))
+                self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
                 if self.config.m < max(orders):
                     self.config.m = max(orders)
                     self.config.m_var = n_data_points // (window_points * self.config.m)
