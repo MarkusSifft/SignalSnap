@@ -960,7 +960,7 @@ class SpectrumCalculator:
         plt.show()
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
-    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind,
+    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, f_min_ind,
                                     single_window, window=None, chunk_corr_gpu=None,
                                     window_points=None):
         """
@@ -1000,15 +1000,15 @@ class SpectrumCalculator:
 
         for order in orders:
             if order == 1:
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
+                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                 single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
+                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind,f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
-                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
+                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind,f_max_ind))), dim=0)
                     single_spectrum = self.c2(a_w, a_w_corr) / (
                             self.config.delta_t * (single_window ** order).sum())
 
@@ -1017,20 +1017,20 @@ class SpectrumCalculator:
                             self.config.delta_t * (single_window ** order).sum())
 
             elif order == 3:
-                a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind // 2))), dim=0)
+                a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind,f_max_ind // 2))), dim=0)
                 a_w2 = a_w1
                 a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
             else:  # order 4
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_max_ind))), dim=0)
+                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     if self.config.random_phase:
                         a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points)
 
-                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_max_ind))), dim=0)
+                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                 else:
                     a_w_corr = a_w
 
