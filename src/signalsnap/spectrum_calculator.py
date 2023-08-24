@@ -1180,10 +1180,11 @@ class SpectrumCalculator:
             self.S_gpu[order] /= n_chunks
             self.S[order] = self.S_gpu[order].to_ndarray()
 
-            self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
+            if not self.config.turbo_mode:
+                self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
-            if self.config.interlaced_calculation:
-                self.S_err[order] /= 2
+                if self.config.interlaced_calculation:
+                    self.S_err[order] /= 2
 
     def __find_datapoints_in_windows(self, start_index, start_index_interlaced, frame_number, enough_data):
         """
