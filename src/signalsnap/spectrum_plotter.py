@@ -429,16 +429,8 @@ class SpectrumPlotter:
 
         Parameters
         ----------
-        contours : bool, optional
-           If set to True, contours are drawn. Default is False.
         s2_filter : float, optional
            Sigma value for a Gaussian filter in the direction of time; useful for noisy data. Default is 0.
-        arcsinh_plot : bool, optional
-           If set to True, spectral values are scaled with an arcsinh function (similar to log but also works for negative values). Default is False.
-        arcsinh_const : float, optional
-           Constant to set the amount of arcsinh scaling. The lower the value, the stronger the scaling. Default is 1e-4.
-        plot_f_max : float, optional
-           Maximum frequency to plot on the frequency axis. Default is None.
         normalize : {'area', 'zero'}, optional
            For better visualization, all spectra can be normalized to set the area under \( S_2 \) to 1 or the value at \( S_2(0) \) to 1. Default is False.
 
@@ -481,6 +473,10 @@ class SpectrumPlotter:
 
         t_for_one_spec = self.spectrum_calculator.T_window * self.spectrum_calculator.m[2] * \
                          self.spectrum_calculator.m_stationarity[2]
+
+        if self.spectrum_calculator.config.interlaced_calculation:
+            t_for_one_spec /= 2
+
         time_axis = np.arange(0, s2_array.shape[1] * t_for_one_spec, t_for_one_spec)
         print(
             f'One spectrum calculated from a {t_for_one_spec * (s2_filter + 1)} ' + self.spectrum_calculator.t_unit + ' measurement')

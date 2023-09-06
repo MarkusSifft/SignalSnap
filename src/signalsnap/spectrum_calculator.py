@@ -1360,6 +1360,9 @@ class SpectrumCalculator:
                 # Inform user if variables have been changed
                 if original_m != m or original_window_points != window_points:
                     print(f"Values have been changed: m = {m}, window_points = {window_points}")
+
+                self.config.m = m
+
             else:
                 m = self.config.m
 
