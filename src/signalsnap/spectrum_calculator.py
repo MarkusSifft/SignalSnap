@@ -1001,10 +1001,10 @@ class SpectrumCalculator:
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
-                print(c1(a_w))
-                print(self.config.delta_t)
-                print(single_window.mean() )
-                print(single_window.shape[0])
+                print('c1:', c1(a_w))
+                print('delta_t:', self.config.delta_t)
+                print('mean window:', single_window.mean() )
+                print('window shape_', single_window.shape[0])
                 single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
