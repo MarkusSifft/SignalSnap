@@ -1101,6 +1101,7 @@ class SpectrumCalculator:
                         self.S_stationarity_temp[4] = to_gpu(
                             1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
 
+
     def __reset_variables(self, orders, f_lists=None):
         """
         Helper function to reset all variables in case spectra are recalculated.
