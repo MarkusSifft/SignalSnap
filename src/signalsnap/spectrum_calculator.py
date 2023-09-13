@@ -1101,9 +1101,6 @@ class SpectrumCalculator:
                         self.S_stationarity_temp[4] = to_gpu(
                             1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
 
-        if not 1 in orders or not len(orders) == 1:
-            print('Number of points: ' + str(len(self.freq[2])))
-
     def __reset_variables(self, orders, f_lists=None):
         """
         Helper function to reset all variables in case spectra are recalculated.
