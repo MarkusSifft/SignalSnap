@@ -13,7 +13,7 @@ description = "Spectra at your fingertips"
 readme = "README.md"
 requires-python = "<3.12"
 classifiers = [
- "Development Status :: 2 - Alpha",
+ "Development Status :: 3 - Alpha",
  "Intended Audience :: Science/Research",
  "License :: OSI Approved :: BSD 3-Clause License",
  "Programming Language :: Python",
