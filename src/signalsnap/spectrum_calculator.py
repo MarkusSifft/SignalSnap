@@ -146,7 +146,8 @@ def find_start_index_interlaced(data, T_window):
     end_time = T_window / 2
 
     if end_time > data[-1]:
-        raise ValueError("Not even half a window fits your data. Your resolution is either way too high or your data way too short.")
+        raise ValueError(
+            "Not even half a window fits your data. Your resolution is either way too high or your data way too short.")
 
     i = 0
     while True:
@@ -1004,11 +1005,11 @@ class SpectrumCalculator:
                 single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind,f_max_ind))), dim=0)
+                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
-                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind,f_max_ind))), dim=0)
+                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                     single_spectrum = self.c2(a_w, a_w_corr) / (
                             self.config.delta_t * (single_window ** order).sum())
 
@@ -1017,7 +1018,7 @@ class SpectrumCalculator:
                             self.config.delta_t * (single_window ** order).sum())
 
             elif order == 3:
-                a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind,f_max_ind // 2))), dim=0)
+                a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind // 2))), dim=0)
                 a_w2 = a_w1
                 a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
@@ -1071,7 +1072,6 @@ class SpectrumCalculator:
 
         f_max_ind = f_all_in.shape[0]
 
-
         for order in orders:
             if order == 3:
                 self.freq[order] = f_all_in[:int(f_max_ind // 2)]
@@ -1100,7 +1100,6 @@ class SpectrumCalculator:
                     elif order == 4:
                         self.S_stationarity_temp[4] = to_gpu(
                             1j * np.ones((f_max_ind, f_max_ind, self.config.m_stationarity)))
-
 
     def __reset_variables(self, orders, f_lists=None):
         """
@@ -1336,7 +1335,8 @@ class SpectrumCalculator:
         else:
             # Set m to be as high as possible for the given m_var in the config if m is not given
             self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-            if self.config.m < 4 * max(orders): # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
+            if self.config.m < 4 * max(
+                    orders):  # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
                 self.config.m = 4 * max(orders)
                 self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
                 if self.config.m < max(orders):
@@ -1372,9 +1372,10 @@ class SpectrumCalculator:
 
             if self.config.m_stationarity is not None:
                 if number_of_spectra < self.config.m_stationarity:
-                    raise ValueError(f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-                                     f"to visualize changes in the power spectrum over time. Consider "
-                                     f"decreasing the resolution of the spectra or the variable m_stationary.")
+                    raise ValueError(
+                        f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                        f"to visualize changes in the power spectrum over time. Consider "
+                        f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
@@ -1558,7 +1559,8 @@ class SpectrumCalculator:
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t, exp_weighting=exp_weighting)
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t,
+                                                              exp_weighting=exp_weighting)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1671,17 +1673,18 @@ class SpectrumCalculator:
         print('number of points:', f_list.shape[0])
         print('delta f:', f_list[1] - f_list[0])
 
-        self.__prep_f_and_S_arrays(orders, f_list, f_max_ind)
+        self.__prep_f_and_S_arrays(orders, f_list)
 
         single_window, N_window_full = self.calc_single_window()
         self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
         for frame_number in tqdm(range(n_windows)):
 
-            windows, windows_interlaced, start_index, start_index_interlaced, enough_data = self.__find_datapoints_in_windows(start_index,
-                                                                                                          start_index_interlaced,
-                                                                                                          frame_number,
-                                                                                                          enough_data)
+            windows, windows_interlaced, start_index, start_index_interlaced, enough_data = self.__find_datapoints_in_windows(
+                start_index,
+                start_index_interlaced,
+                frame_number,
+                enough_data)
             if not enough_data:
                 break
             if self.config.interlaced_calculation:
