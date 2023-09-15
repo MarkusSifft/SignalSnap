@@ -1736,7 +1736,8 @@ class SpectrumCalculator:
                     else:
                         a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
-                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, single_window)
+                f_min_ind = 0
+                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window)
 
         self.__store_final_spectra(orders, n_chunks, n_windows)
 
