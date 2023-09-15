@@ -799,6 +799,7 @@ class SpectrumCalculator:
         self.S_gpu = None
         self.S_err_gpu = None
         self.main_data = None
+
         # Only set to None if the attribute exists
         if hasattr(self, 'config'):
             self.config.corr_data = None
