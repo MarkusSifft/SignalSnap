@@ -42,7 +42,7 @@ Examples for every function of the package are currently added to the folder Exa
 to get you started. We will generate some white noise as signal/dataset and store it as Numpy array called `y`.
 
 ```python
-import signalsnap as snp
+from signalsnap import SpectrumCalculator, SpectrumConfig, PlotConfig
 import numpy as np
 
 rng = np.random.default_rng()
@@ -60,16 +60,16 @@ later the spectra and errors, all freely chosen variables and contains
 the methods for calculating the spectra, plotting and storing.
 
 ```python
-spec = snp.SpectrumCalculator(data=y, delta_t=1 / fs, f_unit=f_unit)
-T_window = 0.02  # in ms
-f_max = 5e3  # in kHz
-f, s, serr = spec.calc_spec(order_in=[2], T_window=T_window, f_max=f_max, backend='cpu')
+config = SpectrumConfig(data=y, delta_t=1/fs, f_unit='kHz', 
+                        spectrum_size=128, order_in=[2], 
+                        f_max=5e3, backend='cpu')
+spec = SpectrumCalculator(config)
+f, s, serr = spec.calc_spec()
 ```
 
 ```
-Actual T_window: 0.02
-Maximum frequency: 5000.0
-Number of points: 101
+T_window: 2.540e-02 ms
+Maximum frequency: 5.000e+03 kHz
 ```
 ![data in first window](Examples/plots/example_window.png)
 
@@ -82,7 +82,8 @@ of the spectra value (1 sigma).
 Visualization of the results is just as easy as the calculation.
 
 ```python
-fig = spec.plot(order_in=[2], f_max=f_max/2)
+plot_config = PlotConfig(plot_orders=[2], plot_f_max=5e3/2)
+fig = spec.plot(plot_config)
 ```
 ![power spectrum of the data](Examples/plots/example_s2.png)
 
@@ -104,12 +105,17 @@ significantly from Gaussian noise using the first property (has no significant h
 only have to change the `order_in` argument:
 
 ```python
-f, s, serr = spec.calc_spec(order_in=[2, 3, 4], T_window=T_window, f_max=f_max, backend='cpu')
+config = SpectrumConfig(data=y, delta_t=1/fs, f_unit='kHz', 
+                        spectrum_size=128, order_in='all', 
+                        f_max=5e3, backend='cpu')
+spec = SpectrumCalculator(config)
+f, s, serr = spec.calc_spec()
 ```
 
 Plotting can also be done as before by changing the `order_in` argument:
 ```python
-fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2, green_alpha=0)
+plot_config = PlotConfig(plot_orders=[2,3,4], plot_f_max=5e3/2, green_alpha=0)
+fig = spec.plot(plot_config)
 ```
 ![polyspectra of the data](Examples/plots/example_poly_no_errors.png)
 
@@ -119,7 +125,8 @@ plots. Here, errors are visualized be overlaying a green color on the spectral c
 zero less than a certain number of standard deviations. 
 
 ```python
-fig = spec.plot(order_in=[2, 3, 4], f_max=f_max/2, sigma=3)
+plot_config = PlotConfig(plot_orders=[2,3,4], plot_f_max=5e3/2, sigma=3)
+fig = spec.plot(plot_config)
 ```
 ![polyspectra of the data](Examples/plots/example_poly.png)
 
