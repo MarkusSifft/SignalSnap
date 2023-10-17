@@ -149,6 +149,9 @@ def find_start_index_interlaced(data, T_window):
         raise ValueError(
             "Not even half a window fits your data. Your resolution is either way too high or your data way too short.")
 
+    if end_time <= data[0]:
+        return 0
+
     i = 0
     while True:
         if data[i] > end_time:
@@ -1224,6 +1227,7 @@ class SpectrumCalculator:
         for i in range(self.config.m):
             end_index, end_index_interlaced = find_end_index(self.data, start_index,
                                                              self.T_window, self.config.m, frame_number, i)
+
             if end_index == -1:
                 enough_data = False
                 break
@@ -1625,6 +1629,9 @@ class SpectrumCalculator:
         w_list_gpu = to_gpu(w_list)
         n_windows = int(self.data[-1] // (self.T_window * self.config.m))
 
+        if self.config.m_var is None:
+            self.config.m_var = n_windows
+
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
     def calc_spec_poisson_one_spectrum(self, f_lists=None,
@@ -1689,8 +1696,10 @@ class SpectrumCalculator:
                 start_index_interlaced,
                 frame_number,
                 enough_data)
+
             if not enough_data:
                 break
+
             if self.config.interlaced_calculation:
                 iterator = zip([False, True], [windows, windows_interlaced])
             else:
