@@ -1528,7 +1528,7 @@ class SpectrumCalculator:
         return self.freq, self.S, self.S_err
 
     def calc_spec_poisson(self, n_reps=10,
-                          sigma_t=0.14, exp_weighting=True):
+                          sigma_t=0.14, exp_weighting=True, T_window = None):
         """
         Calculate spectra using the Poisson method and average over `n_reps` repetitions.
 
@@ -1568,7 +1568,7 @@ class SpectrumCalculator:
 
         for i in range(n_reps):
             f, S, S_err = self.calc_spec_poisson_one_spectrum(sigma_t=sigma_t,
-                                                              exp_weighting=exp_weighting)
+                                                              exp_weighting=exp_weighting, T_window = T_window)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1579,13 +1579,19 @@ class SpectrumCalculator:
 
         return self.freq, self.S, self.S_err
 
-    def setup_data_calc_spec_poisson(self):
+    def setup_data_calc_spec_poisson(self, T_window = None):
 
         """
         Set up data for the calculation of the spectral analysis using Poisson statistics.
 
         This function computes various frequency-related parameters needed for the spectral analysis,
         based on the given frequency lists and the configuration provided in `self.config`.
+
+        Parameters
+        -------
+        T_window : (float, None)
+            If None, T_window is estimated from the freqeuncy spacing in f_lists. It can be chosen manually since
+            computation time might be lower for a larger window.
 
         Returns
         -------
@@ -1609,13 +1615,16 @@ class SpectrumCalculator:
 
         if self.config.f_lists is not None:
             f_list = np.hstack(self.config.f_lists)
-            f_min = np.abs(f_list - np.roll(f_list,1)).min()
+            delta_f = np.abs(f_list - np.roll(f_list,1)).min()
         else:
-            f_min = self.config.f_max / (self.config.spectrum_size - 1)
-            f_list = None
-            f_list = np.arange(0, self.config.f_max + f_min, f_min)
+            delta_f = self.config.f_max / (self.config.spectrum_size - 1)
+            f_list = np.arange(0, self.config.f_max + delta_f, delta_f)
 
-        self.T_window = 1 / f_min
+        if T_window is None:
+            self.T_window = 1 / delta_f
+        else:
+            self.T_window = T_window
+
         f_max_ind = len(f_list)
         w_list = 2 * np.pi * f_list
         w_list_gpu = to_gpu(w_list)
@@ -1626,7 +1635,7 @@ class SpectrumCalculator:
 
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
-    def calc_spec_poisson_one_spectrum(self, sigma_t=0.14, exp_weighting=True):
+    def calc_spec_poisson_one_spectrum(self, sigma_t=0.14, exp_weighting=True, T_window = None):
         """
         Calculate the Poisson spectrum for one spectrum based on the configuration stored in self.config.
 
@@ -1665,7 +1674,7 @@ class SpectrumCalculator:
         if self.config.delta_t is None:
             self.config.delta_t = 1
 
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson()
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(T_window = None)
 
         n_chunks = 0
         start_index = 0
