@@ -154,9 +154,25 @@ class SpectrumConfig:
         if not isinstance(turbo_mode, bool):
             raise ValueError("turbo_mode must be a boolean value (True or False).")
 
-        if f_min > 0 and 3 in order_in:
-            order_in.remove(3)
-            print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
+        if f_min is not None:
+            if isinstance(order_in, list):
+                if f_min > 0 and 3 in order_in:
+                    order_in.remove(3)
+                    print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
+            if isinstance(order_in, str):
+                if f_min > 0 and order_in == 'all':
+                    order_in = [1, 2, 4]
+                    print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
+
+        if f_lists is not None:
+            if isinstance(order_in, list):
+                if f_min > 0 and 3 in order_in:
+                    order_in.remove(3)
+                    print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
+            if isinstance(order_in, str):
+                if f_min > 0 and order_in == 'all':
+                    order_in = [1, 2, 4]
+                    print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
 
         self.path = path
         self.group_key = group_key
