@@ -1286,7 +1286,7 @@ class SpectrumCalculator:
         """
         af.set_backend(self.config.backend)
         orders = self.process_order()
-        self.__reset_variables(orders)
+        self.__reset_variables(orders, f_lists=self.config.f_lists)
         return orders
 
     def setup_data_calc_spec(self, orders):
@@ -1641,9 +1641,6 @@ class SpectrumCalculator:
 
         Parameters
         ----------
-        f_lists : list of array_like, optional
-            Frequencies at which the spectra will be calculated (can be multiple arrays with different frequency steps).
-            Default is None.
         sigma_t : float, optional
             Width of approximate confined Gaussian windows. Default is 0.14.
 
@@ -1674,7 +1671,7 @@ class SpectrumCalculator:
         if self.config.delta_t is None:
             self.config.delta_t = 1
 
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(T_window = None)
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(T_window = T_window)
 
         n_chunks = 0
         start_index = 0
