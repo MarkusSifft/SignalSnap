@@ -1527,7 +1527,7 @@ class SpectrumCalculator:
 
         return self.freq, self.S, self.S_err
 
-    def calc_spec_poisson(self, n_reps=10, f_lists=None,
+    def calc_spec_poisson(self, n_reps=10,
                           sigma_t=0.14, exp_weighting=True):
         """
         Calculate spectra using the Poisson method and average over `n_reps` repetitions.
@@ -1567,7 +1567,7 @@ class SpectrumCalculator:
         all_S_err = []
 
         for i in range(n_reps):
-            f, S, S_err = self.calc_spec_poisson_one_spectrum(f_lists=f_lists, sigma_t=sigma_t,
+            f, S, S_err = self.calc_spec_poisson_one_spectrum(sigma_t=sigma_t,
                                                               exp_weighting=exp_weighting)
 
             all_S.append(S)
