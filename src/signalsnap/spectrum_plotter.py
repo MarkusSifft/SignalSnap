@@ -302,9 +302,9 @@ class SpectrumPlotter:
 
         fig, ax = self.setup_plot()
 
-        if self.spectrum_calculator.f_lists[2] is not None:
+        if self.spectrum_calculator.f_lists is not None:
             broken_lims = []
-            for part in self.spectrum_calculator.f_lists[2]:
+            for part in self.spectrum_calculator.f_lists:
                 broken_lims.append((part[0], part[-1]))
 
         s_data_plot = {2: None, 3: None, 4: None}
