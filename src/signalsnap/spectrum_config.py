@@ -80,7 +80,7 @@ class SpectrumConfig:
 
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None,
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
-                 f_unit='Hz', f_max=None, f_min=0, backend='cpu', spectrum_size=100, order_in='all',
+                 f_unit='Hz', f_max=None, f_min=0, f_lists=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=20, m_var=None, m_stationarity=None, interlaced_calculation=True,
                  random_phase=False,
@@ -104,7 +104,7 @@ class SpectrumConfig:
             raise ValueError("f_unit must be one of 'Hz', 'kHz', 'MHz', 'GHz', 'THz', 'mHz'.")
         if backend not in ['cpu', 'opencl', 'cuda']:
             raise ValueError("backend must be one of 'cpu', 'opencl', 'cuda'.")
-        if not isinstance(spectrum_size, int) or spectrum_size <= 0:
+        if (not isinstance(spectrum_size, int) or spectrum_size <= 0) and f_lists is not None:
             raise ValueError("spectrum_size must be a positive integer.")
 
         if order_in != 'all' and (not isinstance(order_in, list) or not all(1 <= i <= 4 for i in order_in)):
