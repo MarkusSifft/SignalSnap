@@ -1613,17 +1613,15 @@ class SpectrumCalculator:
         The function also relies on GPU functions, so appropriate setup for GPU computation is assumed.
         """
 
-        f_min = self.config.f_max / (self.config.spectrum_size - 1)
-        self.T_window = 1 / f_min
-
         if f_lists is not None:
             f_list = np.hstack(f_lists)
+            f_min = np.abs(f_list - np.roll(f_list,1)).min()
         else:
+            f_min = self.config.f_max / (self.config.spectrum_size - 1)
             f_list = None
-
-        if f_list is None:
             f_list = np.arange(0, self.config.f_max + f_min, f_min)
 
+        self.T_window = 1 / f_min
         f_max_ind = len(f_list)
         w_list = 2 * np.pi * f_list
         w_list_gpu = to_gpu(w_list)
