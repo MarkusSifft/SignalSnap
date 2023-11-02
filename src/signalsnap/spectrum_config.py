@@ -141,9 +141,9 @@ class SpectrumConfig:
             raise ValueError("full_import must be a boolean value (True or False).")
         if not isinstance(show_first_frame, bool):
             raise ValueError("show_first_frame must be a boolean value (True or False).")
-        if f_max is not None and (not isinstance(f_max, (float, int)) or f_max <= 0):
+        if (f_max is not None and (not isinstance(f_max, (float, int)) or f_max <= 0)) and f_lists is not None:
             raise ValueError("f_max must be a positive number or None.")
-        if not isinstance(f_min, (float, int)) or f_min < 0:
+        if (not isinstance(f_min, (float, int)) or f_min < 0) and f_lists is not None:
             raise ValueError("f_min must be a positive number or 0.")
         if corr_shift is not None and (not isinstance(corr_shift, int) or corr_shift < 0):
             raise ValueError("corr_shift must be a non-negative integer or None.")
