@@ -1579,19 +1579,13 @@ class SpectrumCalculator:
 
         return self.freq, self.S, self.S_err
 
-    def setup_data_calc_spec_poisson(self, f_lists):
+    def setup_data_calc_spec_poisson(self):
 
         """
         Set up data for the calculation of the spectral analysis using Poisson statistics.
 
         This function computes various frequency-related parameters needed for the spectral analysis,
         based on the given frequency lists and the configuration provided in `self.config`.
-
-        Parameters
-        ----------
-        f_lists : list of array_like or None
-            List of arrays representing frequency values. If None, the frequency list is generated
-            based on the configuration parameters.
 
         Returns
         -------
@@ -1613,8 +1607,8 @@ class SpectrumCalculator:
         The function also relies on GPU functions, so appropriate setup for GPU computation is assumed.
         """
 
-        if f_lists is not None:
-            f_list = np.hstack(f_lists)
+        if self.config.f_lists is not None:
+            f_list = np.hstack(self.config.f_lists)
             f_min = np.abs(f_list - np.roll(f_list,1)).min()
         else:
             f_min = self.config.f_max / (self.config.spectrum_size - 1)
@@ -1632,8 +1626,7 @@ class SpectrumCalculator:
 
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
-    def calc_spec_poisson_one_spectrum(self, f_lists=None,
-                                       sigma_t=0.14, exp_weighting=True):
+    def calc_spec_poisson_one_spectrum(self, sigma_t=0.14, exp_weighting=True):
         """
         Calculate the Poisson spectrum for one spectrum based on the configuration stored in self.config.
 
@@ -1672,7 +1665,7 @@ class SpectrumCalculator:
         if self.config.delta_t is None:
             self.config.delta_t = 1
 
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(f_lists)
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson()
 
         n_chunks = 0
         start_index = 0

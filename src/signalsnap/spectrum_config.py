@@ -185,6 +185,7 @@ class SpectrumConfig:
         self.corr_dataset = corr_dataset
         self.f_unit = f_unit
         self.f_max = f_max
+        self.f_lists = f_lists
         self.backend = backend
         self.spectrum_size = spectrum_size
         self.order_in = order_in
