@@ -307,6 +307,8 @@ class SpectrumPlotter:
             for part in self.spectrum_calculator.f_lists[2]:
                 broken_lims.append((part[0], part[-1]))
 
+            self.plot_config.broken_lims = broken_lims
+
         s_data_plot = {2: None, 3: None, 4: None}
         s_err_plot = {2: None, 3: None, 4: None}
         s_f_plot = {2: None, 3: None, 4: None}
