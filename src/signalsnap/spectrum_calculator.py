@@ -580,9 +580,16 @@ class SpectrumCalculator:
 
         if self.config.coherent:
             s2 = mean_1
+
         else:
+
             mean_2 = mean(a_w, dim=2)
-            mean_3 = mean(conj(a_w_corr), dim=2)
+
+            if self.config.corr_data is None and self.config.corr_path is None:
+                mean_3 = conj(mean_2)
+            else:
+                mean_3 = mean(conj(a_w_corr), dim=2)
+
             s2 = m / (m - 1) * (mean_1 - mean_2 * mean_3)
         return s2
 
