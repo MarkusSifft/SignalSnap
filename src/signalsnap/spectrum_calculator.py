@@ -968,9 +968,9 @@ class SpectrumCalculator:
         plt.show()
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
-    def __fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, f_min_ind,
-                                    single_window, window=None, chunk_corr_gpu=None,
-                                    window_points=None):
+    def fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, f_min_ind,
+                                  single_window, window=None, chunk_corr_gpu=None,
+                                  window_points=None):
         """
         Helper function to calculate the (1,2,3,4)-order cumulant from the Fourier coefficients of the windows in
         one frame.
@@ -1517,8 +1517,8 @@ class SpectrumCalculator:
                     a_w_all_gpu = self.add_random_phase(a_w_all_gpu, window_points)
 
                 # --------- calculate spectra ----------
-                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
-                                                 window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
+                self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
+                                               window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
 
                 if n_chunks == self.config.break_after:
                     break
@@ -1747,7 +1747,7 @@ class SpectrumCalculator:
                         a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
 
                 f_min_ind = 0
-                self.__fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window)
+                self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window)
 
         self.__store_final_spectra(orders, n_chunks, n_windows)
 
