@@ -812,7 +812,7 @@ class SpectrumCalculator:
         self.S_stationarity_temp = None
         pickle_save(save_path, self)
 
-    def __store_single_spectrum(self, single_spectrum, order):
+    def store_single_spectrum(self, single_spectrum, order):
 
         """
         Helper function to store the spectra of single frames afterwards used for calculation of errors and overlaps.
@@ -1012,9 +1012,10 @@ class SpectrumCalculator:
                 single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
-                print('a_w_all_gpu:', a_w_all_gpu.shape)
-                print(f_min_ind, f_max_ind)
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                if self.config.f_lists is None:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                else:
+                    a_w = a_w_all_gpu
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
@@ -1046,7 +1047,7 @@ class SpectrumCalculator:
 
                 single_spectrum = self.c4(a_w, a_w_corr) / (self.config.delta_t * (single_window ** order).sum())
 
-            self.__store_single_spectrum(single_spectrum, order)
+            self.store_single_spectrum(single_spectrum, order)
 
     def __prep_f_and_S_arrays(self, orders, f_all_in):
         """
