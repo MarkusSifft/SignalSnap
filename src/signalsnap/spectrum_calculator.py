@@ -1012,6 +1012,8 @@ class SpectrumCalculator:
                 single_spectrum = c1(a_w) / self.config.delta_t / single_window.mean() / single_window.shape[0]
 
             elif order == 2:
+                print('a_w_all_gpu:', a_w_all_gpu.shape)
+                print(f_min_ind, f_max_ind)
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
