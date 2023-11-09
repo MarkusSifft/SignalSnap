@@ -668,13 +668,13 @@ class SpectrumCalculator:
 
         m = self.config.m
         print(1)
-        test_out = af.matmulNT(a_w,a_w)
+        #test_out = af.matmulNT(a_w,a_w)
         print(2)
-        x = a_w
-        z = a_w_corr
+        #x = a_w
+        #z = a_w_corr
         print(3)
-        y = conj(x)
-        w = conj(z)
+        #y = conj(x)
+        #w = conj(z)
 
         # x_mean = x - mean(x, dim=2)
         # y_mean = y - mean(y, dim=2)
@@ -703,7 +703,7 @@ class SpectrumCalculator:
         #        )
         #)
 
-        return test_out
+        return 1
         # return s4
 
     def c4_old(self, a_w, a_w_corr):
