@@ -674,9 +674,9 @@ class SpectrumCalculator:
         z = a_w_corr
         print(3)
         y = conj(x)
-        #w = conj(z)
+        w = conj(z)
 
-        # x_mean = x - mean(x, dim=2)
+        x_mean = x - mean(x, dim=2)
         # y_mean = y - mean(y, dim=2)
         # z_mean = z - mean(z, dim=2)
         # w_mean = w - mean(w, dim=2)
