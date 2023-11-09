@@ -644,7 +644,7 @@ class SpectrumCalculator:
                                              2 * d_1_mean * d_2_mean * d_3_mean)
         return s3
 
-    def c4_old(self, a_w, a_w_corr):
+    def c4(self, a_w, a_w_corr):
         """
             Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
@@ -667,11 +667,12 @@ class SpectrumCalculator:
             """
 
         m = self.config.m
-
+        print(1)
         test_out = af.matmulNT(a_w,a_w)
+        print(2)
         x = a_w
         z = a_w_corr
-
+        print(3)
         y = conj(x)
         w = conj(z)
 
@@ -705,7 +706,7 @@ class SpectrumCalculator:
         return test_out
         # return s4
 
-    def c4(self, a_w, a_w_corr):
+    def c4_old(self, a_w, a_w_corr):
         """
         Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
