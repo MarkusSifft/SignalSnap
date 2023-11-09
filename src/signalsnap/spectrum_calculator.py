@@ -676,7 +676,7 @@ class SpectrumCalculator:
         y = conj(x)
         w = conj(z)
 
-        x_mean = x -  af.tile(mean(x, dim=2), 1, 1, x.shape()[2])
+        x_mean = x -  af.tile(mean(x, dim=2), 1, 1, x.shape[2])
         # y_mean = y - mean(y, dim=2)
         # z_mean = z - mean(z, dim=2)
         # w_mean = w - mean(w, dim=2)
