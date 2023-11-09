@@ -1697,6 +1697,8 @@ class SpectrumCalculator:
         single_window, N_window_full = self.calc_single_window()
         self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
+        zeros_on_gpu = to_gpu(1j * np.zeros_like(w_list))
+
         for frame_number in tqdm(range(n_windows)):
 
             windows, windows_interlaced, start_index, start_index_interlaced, enough_data = self.__find_datapoints_in_windows(
@@ -1755,7 +1757,7 @@ class SpectrumCalculator:
                         a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     else:
-                        a_w_all_gpu[:, 0, i] = to_gpu(1j * np.zeros_like(w_list))
+                        a_w_all_gpu[:, 0, i] = zeros_on_gpu
 
                 f_min_ind = 0
                 self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window)
