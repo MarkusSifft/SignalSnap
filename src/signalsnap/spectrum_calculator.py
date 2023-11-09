@@ -646,6 +646,59 @@ class SpectrumCalculator:
 
     def c4(self, a_w, a_w_corr):
         """
+            Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
+
+            Parameters
+            ----------
+            a_w : array
+                Fourier coefficients of the signal.
+            a_w_corr : array
+                Fourier coefficients of the signal or a second signal.
+
+            Returns
+            -------
+            s4 : array
+                The c4 estimator as a matrix.
+
+            Notes
+            -----
+            The value of `m`, the number of windows used for the calculation of one spectrum,
+            is obtained from the `config` object associated with this instance.
+            """
+
+        m = self.config.m
+
+        x = a_w
+        z = a_w_corr
+
+        y = conj(x)
+        w = conj(z)
+
+        x_mean = x - mean(x, dim=2)
+        y_mean = y - mean(y, dim=2)
+        z_mean = z - mean(z, dim=2)
+        w_mean = w - mean(w, dim=2)
+
+        xyzw = af.matmulNT(x_mean * y_mean, z_mean * w_mean)
+        xyzw_mean = mean(xyzw, dim=2)
+
+        xy_zw_mean = af.matmulNT(mean(x_mean * y_mean, dim=2), mean(z_mean * w_mean, dim=2))
+
+        xz_yw_mean = mean(af.matmulNT(x_mean, z_mean) * af.matmulNT(y_mean, w_mean), dim=2)
+
+        xw_yz_mean = mean(af.matmulNT(x_mean, w_mean) * af.matmulNT(y_mean, z_mean), dim=2)
+
+        s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
+                (m + 1) * xyzw_mean -
+                (m - 1) * (
+                    xy_zw_mean + xz_yw_mean + xw_yz_mean
+                )
+        )
+
+        return s4
+
+    def c4_old(self, a_w, a_w_corr):
+        """
         Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
         Parameters
@@ -1539,7 +1592,7 @@ class SpectrumCalculator:
         return self.freq, self.S, self.S_err
 
     def calc_spec_poisson(self, n_reps=10,
-                          sigma_t=0.14, exp_weighting=True, T_window = None):
+                          sigma_t=0.14, exp_weighting=True, T_window=None):
         """
         Calculate spectra using the Poisson method and average over `n_reps` repetitions.
 
@@ -1579,7 +1632,7 @@ class SpectrumCalculator:
 
         for i in range(n_reps):
             f, S, S_err = self.calc_spec_poisson_one_spectrum(sigma_t=sigma_t,
-                                                              exp_weighting=exp_weighting, T_window = T_window)
+                                                              exp_weighting=exp_weighting, T_window=T_window)
 
             all_S.append(S)
             all_S_err.append(S_err)
@@ -1590,7 +1643,7 @@ class SpectrumCalculator:
 
         return self.freq, self.S, self.S_err
 
-    def setup_data_calc_spec_poisson(self, T_window = None):
+    def setup_data_calc_spec_poisson(self, T_window=None):
 
         """
         Set up data for the calculation of the spectral analysis using Poisson statistics.
@@ -1626,7 +1679,7 @@ class SpectrumCalculator:
 
         if self.config.f_lists is not None:
             f_list = np.hstack(self.config.f_lists)
-            delta_f = np.abs(f_list - np.roll(f_list,1)).min()
+            delta_f = np.abs(f_list - np.roll(f_list, 1)).min()
         else:
             delta_f = self.config.f_max / (self.config.spectrum_size - 1)
             f_list = np.arange(0, self.config.f_max + delta_f, delta_f)
@@ -1646,7 +1699,7 @@ class SpectrumCalculator:
 
         return f_list, f_max_ind, n_windows, w_list, w_list_gpu
 
-    def calc_spec_poisson_one_spectrum(self, sigma_t=0.14, exp_weighting=True, T_window = None):
+    def calc_spec_poisson_one_spectrum(self, sigma_t=0.14, exp_weighting=True, T_window=None):
         """
         Calculate the Poisson spectrum for one spectrum based on the configuration stored in self.config.
 
@@ -1682,7 +1735,7 @@ class SpectrumCalculator:
         if self.config.delta_t is None:
             self.config.delta_t = 1
 
-        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(T_window = T_window)
+        f_list, f_max_ind, n_windows, w_list, w_list_gpu = self.setup_data_calc_spec_poisson(T_window=T_window)
 
         n_chunks = 0
         start_index = 0
@@ -1697,7 +1750,7 @@ class SpectrumCalculator:
         single_window, N_window_full = self.calc_single_window()
         self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
-        zeros_on_gpu = to_gpu(1j * np.zeros_like(w_list))
+        # zeros_on_gpu = to_gpu(1j * np.zeros_like(w_list))
 
         for frame_number in tqdm(range(n_windows)):
 
