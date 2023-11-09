@@ -682,11 +682,17 @@ class SpectrumCalculator:
         xyzw = af.matmulNT(x_mean * y_mean, z_mean * w_mean)
         xyzw_mean = mean(xyzw, dim=2)
 
-        xy_zw_mean = af.matmulNT(mean(x_mean * y_mean, dim=2), mean(z_mean * w_mean, dim=2))
+        xy_mean = mean(x_mean * y_mean, dim=2)
+        zw_mean = mean(z_mean * w_mean, dim=2)
+        xy_zw_mean = af.matmulNT(xy_mean, zw_mean)
 
-        xz_yw_mean = mean(af.matmulNT(x_mean, z_mean) * af.matmulNT(y_mean, w_mean), dim=2)
+        xz_mean = af.matmulNT(x_mean, z_mean)
+        yw_mean = af.matmulNT(y_mean, w_mean)
+        xz_yw_mean = mean(xz_mean * yw_mean, dim=2)
 
-        xw_yz_mean = mean(af.matmulNT(x_mean, w_mean) * af.matmulNT(y_mean, z_mean), dim=2)
+        xw_mean = af.matmulNT(x_mean, w_mean)
+        yz_mean = af.matmulNT(y_mean, z_mean)
+        xw_yz_mean = mean(xw_mean * yz_mean, dim=2)
 
         s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                 (m + 1) * xyzw_mean -
