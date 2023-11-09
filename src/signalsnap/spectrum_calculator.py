@@ -668,7 +668,7 @@ class SpectrumCalculator:
 
         m = self.config.m
         print(1)
-        #test_out = af.matmulNT(a_w,a_w)
+        test_out = af.matmulNT(a_w,a_w)
         print(2)
         #x = a_w
         #z = a_w_corr
