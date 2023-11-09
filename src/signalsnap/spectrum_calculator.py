@@ -670,7 +670,7 @@ class SpectrumCalculator:
         print(1)
         test_out = af.matmulNT(a_w,a_w)
         print(2)
-        #x = a_w
+        x = a_w
         #z = a_w_corr
         print(3)
         #y = conj(x)
