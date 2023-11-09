@@ -668,6 +668,7 @@ class SpectrumCalculator:
 
         m = self.config.m
 
+        test_out = af.matmulNT(a_w,a_w)
         x = a_w
         z = a_w_corr
 
@@ -694,14 +695,15 @@ class SpectrumCalculator:
         yz_mean = af.matmulNT(y_mean, z_mean)
         xw_yz_mean = mean(xw_mean * yz_mean, dim=2)
 
-        s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
-                (m + 1) * xyzw_mean -
-                (m - 1) * (
-                    xy_zw_mean + xz_yw_mean + xw_yz_mean
-                )
-        )
+        #s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
+        #        (m + 1) * xyzw_mean -
+        #        (m - 1) * (
+        #            xy_zw_mean + xz_yw_mean + xw_yz_mean
+        #        )
+        #)
 
-        return s4
+        return test_out
+        # return s4
 
     def c4_old(self, a_w, a_w_corr):
         """
