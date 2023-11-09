@@ -644,7 +644,7 @@ class SpectrumCalculator:
                                              2 * d_1_mean * d_2_mean * d_3_mean)
         return s3
 
-    def c4(self, a_w, a_w_corr):
+    def c4_new(self, a_w, a_w_corr):
         """
             Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
@@ -703,7 +703,7 @@ class SpectrumCalculator:
 
         return s4
 
-    def c4_old(self, a_w, a_w_corr):
+    def c4(self, a_w, a_w_corr):
         """
         Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
