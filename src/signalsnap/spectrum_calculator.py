@@ -1719,7 +1719,7 @@ class SpectrumCalculator:
 
                 n_chunks += 1
 
-                a_w_all = 1j * np.ones((w_list.shape[0], self.config.m))
+                a_w_all = 0 * 1j * np.ones((w_list.shape[0], self.config.m))
                 a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
 
                 for i, t_clicks in enumerate(frame):
@@ -1757,7 +1757,9 @@ class SpectrumCalculator:
                         a_w_all_gpu[:, 0, i] = af.matmul(temp1, t_clicks_windowed_gpu)
 
                     else:
-                        a_w_all_gpu[:, 0, i] = zeros_on_gpu
+                        continue
+                        # a_w_all_gpu is initialized as zeros
+                        # a_w_all_gpu[:, 0, i] = zeros_on_gpu
 
                 f_min_ind = 0
                 self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window)
