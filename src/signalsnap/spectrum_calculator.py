@@ -845,7 +845,7 @@ class SpectrumCalculator:
         else:
             return main_data
 
-    def save_spec(self, save_path):
+    def save_spec(self, save_path, remove_S_stationarity=False):
         """
         Save the SpectrumCalculator object to a file, removing pointers and the full dataset before saving.
 
@@ -859,7 +859,7 @@ class SpectrumCalculator:
 
         Examples
         --------
-        >>> spectrum_obj.save_spec('path/to/file.pkl')
+        >>> spectrum_obj.save_spec('path/to/file.pkl', remove_S_stationarity=False)
 
         Notes
         -----
@@ -869,6 +869,8 @@ class SpectrumCalculator:
         self.S_err_gpu = None
         self.main_data = None
         self.data = None
+        if remove_S_stationarity:
+            self.S_stationarity = None
 
         # Only set to None if the attribute exists
         if hasattr(self, 'config'):
