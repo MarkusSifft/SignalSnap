@@ -948,7 +948,7 @@ class SpectrumCalculator:
                 else:
                     dim = 2
 
-                if order==self.config.orders[0]:
+                if order==self.orders[0]:
                     self.number_of_error_estimates += 1
 
 
