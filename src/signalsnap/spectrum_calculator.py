@@ -474,6 +474,7 @@ class SpectrumCalculator:
         self.err_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         self.t_unit = unit_conversion(config.f_unit)
+        self.number_of_error_estimates = 0
 
     def calc_single_window(self):
         """
@@ -947,6 +948,11 @@ class SpectrumCalculator:
                 else:
                     dim = 2
 
+                if order==2:
+                    self.number_of_error_estimates += 1
+
+
+
                 #S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                 #        af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                 #        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
@@ -1272,6 +1278,8 @@ class SpectrumCalculator:
             if not self.config.turbo_mode:
                 #self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
+                print('number of error erstimates:', self.number_of_error_estimates)
+                print('n_windows // self.config.m_var:', (n_windows // self.config.m_var))
                 self.S_err[order] = 1/(n_windows // self.config.m_var) * np.sqrt(self.S_err[order])
 
                 if self.config.interlaced_calculation:
