@@ -1224,6 +1224,7 @@ class SpectrumCalculator:
         - `m_stationarity`: Number of spectra after which their mean is stored to verify stationarity of the data.
         """
         self.err_counter = {1: 0, 2: 0, 3: 0, 4: 0}
+        self.number_of_error_estimates = 0
         self.stationarity_counter = {1: 0, 2: 0, 3: 0, 4: 0}
         for order in orders:
             self.f_lists[order] = f_lists
