@@ -1667,7 +1667,7 @@ class SpectrumCalculator:
 
         for i in orders:
             self.S[i] = sum([S[i] for S in all_S]) / n_reps
-            self.S_err[i] = np.sqrt(sum([S_err[i]**2 for S_err in all_S_err])) / n_reps
+            self.S_err[i] = sum([S_err[i] for S_err in all_S_err]) / n_reps
 
         return self.freq, self.S, self.S_err
 
