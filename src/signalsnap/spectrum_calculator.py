@@ -1420,53 +1420,55 @@ class SpectrumCalculator:
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
 
-        if self.config.turbo_mode:
-            self.config.m = int(n_data_points // window_points - 0.5)
-            m = self.config.m
-        else:
-            # Set m to be as high as possible for the given m_var in the config if m is not given
-            self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-            if self.config.m < 4 * max(
-                    orders):  # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
-                self.config.m = 4 * max(orders)
-                self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-                if self.config.m < max(orders):
-                    self.config.m = max(orders)
-                    self.config.m_var = n_data_points // (window_points * self.config.m)
-                print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
+        m = self.config.m
 
-            # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
-            if not window_points * self.config.m + window_points // 2 < n_data_points:
-                original_m = self.config.m
-                original_window_points = window_points
-                m = n_data_points // window_points
-                if m < max(orders):
-                    m = max(orders)
-                    window_points = n_data_points // m
-                    if window_points < 1:
-                        raise ValueError("Not enough data points for the specified configuration.")
-
-                # Inform user if variables have been changed
-                if original_m != m or original_window_points != window_points:
-                    print(f"Values have been changed: m = {m}, window_points = {window_points}")
-
-                self.config.m = m
-
-            else:
-                m = self.config.m
-
-            # Check m_var and m_stationarity
-            number_of_spectra = n_data_points // (window_points * m + window_points // 2)
-            if number_of_spectra < self.config.m_var:
-                raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
-                                 f"decreasing the resolution of the spectra or the variable m_var.")
-
-            if self.config.m_stationarity is not None:
-                if number_of_spectra < self.config.m_stationarity:
-                    raise ValueError(
-                        f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-                        f"to visualize changes in the power spectrum over time. Consider "
-                        f"decreasing the resolution of the spectra or the variable m_stationary.")
+        # if self.config.turbo_mode:
+        #     self.config.m = int(n_data_points // window_points - 0.5)
+        #     m = self.config.m
+        # else:
+        #     # Set m to be as high as possible for the given m_var in the config if m is not given
+        #     self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
+        #     if self.config.m < 4 * max(
+        #             orders):  # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
+        #         self.config.m = 4 * max(orders)
+        #         self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
+        #         if self.config.m < max(orders):
+        #             self.config.m = max(orders)
+        #             self.config.m_var = n_data_points // (window_points * self.config.m)
+        #         print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
+        #
+        #     # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
+        #     if not window_points * self.config.m + window_points // 2 < n_data_points:
+        #         original_m = self.config.m
+        #         original_window_points = window_points
+        #         m = n_data_points // window_points
+        #         if m < max(orders):
+        #             m = max(orders)
+        #             window_points = n_data_points // m
+        #             if window_points < 1:
+        #                 raise ValueError("Not enough data points for the specified configuration.")
+        #
+        #         # Inform user if variables have been changed
+        #         if original_m != m or original_window_points != window_points:
+        #             print(f"Values have been changed: m = {m}, window_points = {window_points}")
+        #
+        #         self.config.m = m
+        #
+        #     else:
+        #         m = self.config.m
+        #
+        #     # Check m_var and m_stationarity
+        #     number_of_spectra = n_data_points // (window_points * m + window_points // 2)
+        #     if number_of_spectra < self.config.m_var:
+        #         raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
+        #                          f"decreasing the resolution of the spectra or the variable m_var.")
+        #
+        #     if self.config.m_stationarity is not None:
+        #         if number_of_spectra < self.config.m_stationarity:
+        #             raise ValueError(
+        #                 f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+        #                 f"to visualize changes in the power spectrum over time. Consider "
+        #                 f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
