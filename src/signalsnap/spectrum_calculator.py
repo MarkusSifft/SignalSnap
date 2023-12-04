@@ -698,7 +698,7 @@ class SpectrumCalculator:
         s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                 (m + 1) * xyzw_mean -
                 (m - 1) * (
-                    xy_zw_mean + xz_yw_mean + xw_yz_mean
+                        xy_zw_mean + xz_yw_mean + xw_yz_mean
                 )
         )
 
@@ -733,43 +733,43 @@ class SpectrumCalculator:
 
         ones = to_gpu(np.ones_like(a_w.to_ndarray()[:, :, 0]))
 
-        sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr) # d1
+        sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr)  # d1
         sum_11c22c_m = mean(sum_11c22c, dim=2)
 
-        sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr) #d2
+        sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr)  # d2
         sum_11c2_m = mean(sum_11c2, dim=2)
-        sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr) #d3
+        sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr)  # d3
         sum_122c_m = mean(sum_122c, dim=2)
-        sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr) #d4
+        sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr)  # d4
         sum_1c22c_m = mean(sum_1c22c, dim=2)
-        sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr) #d5
+        sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr)  # d5
         sum_11c2c_m = mean(sum_11c2c, dim=2)
 
-        sum_11c = a_w * a_w_conj # d6
+        sum_11c = a_w * a_w_conj  # d6
         sum_11c_m = mean(sum_11c, dim=2)
-        sum_22c = a_w_corr * a_w_conj_corr #d6
+        sum_22c = a_w_corr * a_w_conj_corr  # d6
         sum_22c_m = mean(sum_22c, dim=2)
-        sum_12c = af.matmulNT(a_w, a_w_conj_corr) #d7
+        sum_12c = af.matmulNT(a_w, a_w_conj_corr)  # d7
         sum_12c_m = mean(sum_12c, dim=2)
-        sum_1c2 = af.matmulNT(a_w_conj, a_w_corr) #d8
+        sum_1c2 = af.matmulNT(a_w_conj, a_w_corr)  # d8
         sum_1c2_m = mean(sum_1c2, dim=2)
 
-        sum_12 = af.matmulNT(a_w, a_w_corr) #d9
+        sum_12 = af.matmulNT(a_w, a_w_corr)  # d9
         sum_12_m = mean(sum_12, dim=2)
-        sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr) #d9
+        sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr)  # d9
         sum_1c2c_m = mean(sum_1c2c, dim=2)
 
-        sum_1_m = mean(a_w, dim=2) # d10
-        sum_1c_m = mean(a_w_conj, dim=2) #d11
-        sum_2_m = mean(a_w_corr, dim=2) # d10
-        sum_2c_m = mean(a_w_conj_corr, dim=2) #d11
+        sum_1_m = mean(a_w, dim=2)  # d10
+        sum_1c_m = mean(a_w_conj, dim=2)  # d11
+        sum_2_m = mean(a_w_corr, dim=2)  # d10
+        sum_2c_m = mean(a_w_conj_corr, dim=2)  # d11
 
-        sum_11c_m = af.matmulNT(sum_11c_m, ones) # d6'
-        sum_22c_m = af.matmulNT(ones, sum_22c_m) # d6''
-        sum_1_m = af.matmulNT(sum_1_m, ones) # d10'
-        sum_1c_m = af.matmulNT(sum_1c_m, ones) # d11'
-        sum_2_m = af.matmulNT(ones, sum_2_m) #d10''
-        sum_2c_m = af.matmulNT(ones, sum_2c_m) #d11''
+        sum_11c_m = af.matmulNT(sum_11c_m, ones)  # d6'
+        sum_22c_m = af.matmulNT(ones, sum_22c_m)  # d6''
+        sum_1_m = af.matmulNT(sum_1_m, ones)  # d10'
+        sum_1c_m = af.matmulNT(sum_1c_m, ones)  # d11'
+        sum_2_m = af.matmulNT(ones, sum_2_m)  # d10''
+        sum_2c_m = af.matmulNT(ones, sum_2c_m)  # d11''
 
         s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                 (m + 1) * sum_11c22c_m - (m + 1) * (sum_11c2_m * sum_2c_m + sum_11c2c_m * sum_2_m +
@@ -948,16 +948,14 @@ class SpectrumCalculator:
                 else:
                     dim = 2
 
-                if order==self.config.order_in[0]:
+                if order == self.orders[0]:
                     self.number_of_error_estimates += 1
 
-
-
-                #S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                # S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                 #        af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                 #        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
                 #    af.real(self.S_errs[order]), dim=dim)))
-                #S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                # S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                 #        af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
                 #        af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
                 #    af.imag(self.S_errs[order]), dim=dim)))
@@ -1276,11 +1274,11 @@ class SpectrumCalculator:
             self.S[order] = self.S_gpu[order].to_ndarray()
 
             if not self.config.turbo_mode:
-                #self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
+                # self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
                 print('number of error erstimates:', self.number_of_error_estimates)
                 print('n_windows // self.config.m_var:', (n_windows // self.config.m_var))
-                self.S_err[order] = 1/(n_windows // self.config.m_var) * np.sqrt(self.S_err[order])
+                self.S_err[order] = 1 / (n_windows // self.config.m_var) * np.sqrt(self.S_err[order])
 
                 if self.config.interlaced_calculation:
                     self.S_err[order] /= 2
@@ -1755,6 +1753,7 @@ class SpectrumCalculator:
         """
 
         orders = self.reset_and_backend_setup()
+        self.orders = orders
 
         # -------data setup---------
         if self.config.data is None:
