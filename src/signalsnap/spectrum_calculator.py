@@ -1456,8 +1456,6 @@ class SpectrumCalculator:
             else:
                 print(f"Values have been changed due to too little data. old: m_var = {self.config.m_var}, new: m_var = {m_var}")
             self.config.m_var = m_var
-        else:
-            m_var = self.config.m_var
 
         if self.config.m_stationarity is not None:
             if number_of_spectra < self.config.m_stationarity:
