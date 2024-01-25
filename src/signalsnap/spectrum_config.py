@@ -64,7 +64,7 @@ class SpectrumConfig:
         Default is None.
     break_after, m, m_var, m_stationarity, window_shift : int, optional
         Various integer parameters with constraints. Defaults are 1e6, 10, 10, None, 1 respectively.
-    turbo_mode : bool
+    turbo_mode : bool (experimental)
         If set, no error is calculated and m is set as high as possible, effectively calculating only one spectrum parallelized.
         Default is False.
 
@@ -82,7 +82,7 @@ class SpectrumConfig:
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
                  f_unit='Hz', f_max=None, f_min=0, f_lists=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
-                 break_after=1e6, m=20, m_var=None, m_stationarity=None, interlaced_calculation=True,
+                 break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True,
                  random_phase=False,
                  rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
 

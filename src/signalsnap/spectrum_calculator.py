@@ -698,7 +698,7 @@ class SpectrumCalculator:
         s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                 (m + 1) * xyzw_mean -
                 (m - 1) * (
-                    xy_zw_mean + xz_yw_mean + xw_yz_mean
+                        xy_zw_mean + xz_yw_mean + xw_yz_mean
                 )
         )
 
@@ -733,43 +733,43 @@ class SpectrumCalculator:
 
         ones = to_gpu(np.ones_like(a_w.to_ndarray()[:, :, 0]))
 
-        sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr) # d1
+        sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr)  # d1
         sum_11c22c_m = mean(sum_11c22c, dim=2)
 
-        sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr) #d2
+        sum_11c2 = af.matmulNT(a_w * a_w_conj, a_w_corr)  # d2
         sum_11c2_m = mean(sum_11c2, dim=2)
-        sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr) #d3
+        sum_122c = af.matmulNT(a_w, a_w_corr * a_w_conj_corr)  # d3
         sum_122c_m = mean(sum_122c, dim=2)
-        sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr) #d4
+        sum_1c22c = af.matmulNT(a_w_conj, a_w_corr * a_w_conj_corr)  # d4
         sum_1c22c_m = mean(sum_1c22c, dim=2)
-        sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr) #d5
+        sum_11c2c = af.matmulNT(a_w * a_w_conj, a_w_conj_corr)  # d5
         sum_11c2c_m = mean(sum_11c2c, dim=2)
 
-        sum_11c = a_w * a_w_conj # d6
+        sum_11c = a_w * a_w_conj  # d6
         sum_11c_m = mean(sum_11c, dim=2)
-        sum_22c = a_w_corr * a_w_conj_corr #d6
+        sum_22c = a_w_corr * a_w_conj_corr  # d6
         sum_22c_m = mean(sum_22c, dim=2)
-        sum_12c = af.matmulNT(a_w, a_w_conj_corr) #d7
+        sum_12c = af.matmulNT(a_w, a_w_conj_corr)  # d7
         sum_12c_m = mean(sum_12c, dim=2)
-        sum_1c2 = af.matmulNT(a_w_conj, a_w_corr) #d8
+        sum_1c2 = af.matmulNT(a_w_conj, a_w_corr)  # d8
         sum_1c2_m = mean(sum_1c2, dim=2)
 
-        sum_12 = af.matmulNT(a_w, a_w_corr) #d9
+        sum_12 = af.matmulNT(a_w, a_w_corr)  # d9
         sum_12_m = mean(sum_12, dim=2)
-        sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr) #d9
+        sum_1c2c = af.matmulNT(a_w_conj, a_w_conj_corr)  # d9
         sum_1c2c_m = mean(sum_1c2c, dim=2)
 
-        sum_1_m = mean(a_w, dim=2) # d10
-        sum_1c_m = mean(a_w_conj, dim=2) #d11
-        sum_2_m = mean(a_w_corr, dim=2) # d10
-        sum_2c_m = mean(a_w_conj_corr, dim=2) #d11
+        sum_1_m = mean(a_w, dim=2)  # d10
+        sum_1c_m = mean(a_w_conj, dim=2)  # d11
+        sum_2_m = mean(a_w_corr, dim=2)  # d10
+        sum_2c_m = mean(a_w_conj_corr, dim=2)  # d11
 
-        sum_11c_m = af.matmulNT(sum_11c_m, ones) # d6'
-        sum_22c_m = af.matmulNT(ones, sum_22c_m) # d6''
-        sum_1_m = af.matmulNT(sum_1_m, ones) # d10'
-        sum_1c_m = af.matmulNT(sum_1c_m, ones) # d11'
-        sum_2_m = af.matmulNT(ones, sum_2_m) #d10''
-        sum_2c_m = af.matmulNT(ones, sum_2c_m) #d11''
+        sum_11c_m = af.matmulNT(sum_11c_m, ones)  # d6'
+        sum_22c_m = af.matmulNT(ones, sum_22c_m)  # d6''
+        sum_1_m = af.matmulNT(sum_1_m, ones)  # d10'
+        sum_1c_m = af.matmulNT(sum_1c_m, ones)  # d11'
+        sum_2_m = af.matmulNT(ones, sum_2_m)  # d10''
+        sum_2c_m = af.matmulNT(ones, sum_2c_m)  # d11''
 
         s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                 (m + 1) * sum_11c22c_m - (m + 1) * (sum_11c2_m * sum_2c_m + sum_11c2c_m * sum_2_m +
@@ -948,16 +948,14 @@ class SpectrumCalculator:
                 else:
                     dim = 2
 
-                if order==self.orders[0]:
+                if order == self.orders[0]:
                     self.number_of_error_estimates += 1
 
-
-
-                #S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                # S_err_gpu_real = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                 #        af.mean(af.real(self.S_errs[order]) * af.real(self.S_errs[order]), dim=dim) -
                 #        af.mean(af.real(self.S_errs[order]), dim=dim) * af.mean(
                 #    af.real(self.S_errs[order]), dim=dim)))
-                #S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
+                # S_err_gpu_imag = af.sqrt(self.config.m_var / (self.config.m_var - 1) * (
                 #        af.mean(af.imag(self.S_errs[order]) * af.imag(self.S_errs[order]), dim=dim) -
                 #        af.mean(af.imag(self.S_errs[order]), dim=dim) * af.mean(
                 #    af.imag(self.S_errs[order]), dim=dim)))
@@ -1277,9 +1275,9 @@ class SpectrumCalculator:
             self.S[order] = self.S_gpu[order].to_ndarray()
 
             if not self.config.turbo_mode:
-                #self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
+                # self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
-                self.S_err[order] = 1/(self.number_of_error_estimates) * np.sqrt(self.S_err[order])
+                self.S_err[order] = 1 / (self.number_of_error_estimates) * np.sqrt(self.S_err[order])
 
                 if self.config.interlaced_calculation:
                     self.S_err[order] /= 2
@@ -1428,55 +1426,45 @@ class SpectrumCalculator:
         n_data_points = self.data.shape[0]
         window_points = int(np.round(self.T_window / self.config.delta_t))
 
-        m = self.config.m
+        if self.config.turbo_mode:
+            self.config.m = int(n_data_points // window_points - 0.5)
+            m = self.config.m
 
-        # if self.config.turbo_mode:
-        #     self.config.m = int(n_data_points // window_points - 0.5)
-        #     m = self.config.m
-        # else:
-        #     # Set m to be as high as possible for the given m_var in the config if m is not given
-        #     self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-        #     if self.config.m < 4 * max(
-        #             orders):  # For 4 * max(orders) the estimator is close to the limit variance (see arXiv:1904.12154)
-        #         self.config.m = 4 * max(orders)
-        #         self.config.m_var = int(n_data_points // (window_points * (self.config.m + 0.5)))
-        #         if self.config.m < max(orders):
-        #             self.config.m = max(orders)
-        #             self.config.m_var = n_data_points // (window_points * self.config.m)
-        #         print(f"Values have been changed: m = {self.config.m}, m_var = {self.config.m_var}")
-        #
-        #     # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
-        #     if not window_points * self.config.m + window_points // 2 < n_data_points:
-        #         original_m = self.config.m
-        #         original_window_points = window_points
-        #         m = n_data_points // window_points
-        #         if m < max(orders):
-        #             m = max(orders)
-        #             window_points = n_data_points // m
-        #             if window_points < 1:
-        #                 raise ValueError("Not enough data points for the specified configuration.")
-        #
-        #         # Inform user if variables have been changed
-        #         if original_m != m or original_window_points != window_points:
-        #             print(f"Values have been changed: m = {m}, window_points = {window_points}")
-        #
-        #         self.config.m = m
-        #
-        #     else:
-        #         m = self.config.m
-        #
-        #     # Check m_var and m_stationarity
-        #     number_of_spectra = n_data_points // (window_points * m + window_points // 2)
-        #     if number_of_spectra < self.config.m_var:
-        #         raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
-        #                          f"decreasing the resolution of the spectra or the variable m_var.")
-        #
-        #     if self.config.m_stationarity is not None:
-        #         if number_of_spectra < self.config.m_stationarity:
-        #             raise ValueError(
-        #                 f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-        #                 f"to visualize changes in the power spectrum over time. Consider "
-        #                 f"decreasing the resolution of the spectra or the variable m_stationary.")
+        else:
+            # Set m to be as high as possible for the given m_var in the config if m is not given
+            # Check if enough data points are there to perform the calculation (added window_points // 2 due to interlaced calculation)
+            if not window_points * self.config.m + window_points // 2 < n_data_points:
+                m = (n_data_points - window_points // 2) // window_points
+                if m < max(orders):
+                    # Spectral resolution has to be decreased
+                    max_spectrum_size = window_points // (2 * window_length_factor) + 1
+                    raise ValueError("Not enough data points for the set spectrum_size. The maximum nuber of "
+                                     f"points in the spectrum of order {max(orders)} is {max_spectrum_size}.")
+
+                print(f"Values have been changed due to too little data. old: m = {self.config.m}, new: m = {m}")
+                self.config.m = m
+            else:
+                m = self.config.m
+
+        # Check m_var and m_stationarity
+        number_of_spectra = n_data_points // (window_points * m + window_points // 2)
+        if number_of_spectra < self.config.m_var:
+            m_var = n_data_points // (window_points * m + window_points // 2)
+            if m_var < 2:
+                raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
+                                 f"decreasing the resolution of the spectra or the variable m_var.")
+            else:
+                print(f"Values have been changed due to too little data. old: m_var = {self.config.m_var}, new: m_var = {m_var}")
+            self.config.m_var = m_var
+        else:
+            m_var = self.config.m_var
+
+        if self.config.m_stationarity is not None:
+            if number_of_spectra < self.config.m_stationarity:
+                     raise ValueError(
+                         f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                         f"to visualize changes in the power spectrum over time. Consider "
+                         f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
