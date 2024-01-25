@@ -26,8 +26,11 @@ from tqdm.auto import tqdm
 
 from .spectrum_config import SpectrumConfig
 from .plot_config import PlotConfig
-import torch
-import cupy as cp
+try:
+    import torch
+except ImportError:
+    print("Failed to import torch!")
+
 
 class MissingValueError(Exception):
     """Base class for missing value exceptions"""
@@ -93,8 +96,9 @@ def to_hdf(dt, data, path, group_name, dataset_name):
         d = grp.create_dataset(dataset_name, data=data)
         d.attrs['dt'] = dt
 
+
 # ----------- Old algorithm to calculate a_w3 ------------------------------------------
-        
+
 # @njit(parallel=False)
 # def calc_a_w3(a_w_all, f_max_ind, m):
 #     """
@@ -119,11 +123,11 @@ def to_hdf(dt, data, path, group_name, dataset_name):
 #     for i in range(f_max_ind // 2):
 #         a_w3[i, :, :] = a_w_all[i:i + f_max_ind // 2, 0, :]
 #     return a_w3.conj()
-        
+
 # --------------------------------------------------------------------------
-        
+
 # ==================== New algorith from here =================================
-        
+
 def a_w3_gen(f_max_ind, m):
     '''
     This new approch needs to generate the initialization only once and isn't
@@ -206,18 +210,18 @@ def calc_a_w3(a_w_all, f_max_ind, m, a_w3, indices, backend):
         # Use advanced indexing and Torch to replace certain elements
         # with values from a_w_all
         device = torch.device('cuda')
-        
+
         a_w_all = torch.from_numpy(a_w_all).to(device)
 
         a_w3 = torch.from_numpy(a_w3).to(device)
         indices = torch.from_numpy(indices).to(device)
-        
+
         a_w3[torch.arange(f_max_ind // 2), :, :] = a_w_all[indices, 0, :m]
         a_w3 = a_w3.conj()
-        
+
         # Convert back to numpy array
         a_w3 = a_w3.cpu().numpy()
-    
+
     return a_w3
 
 
@@ -1225,9 +1229,9 @@ class SpectrumCalculator:
                 t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
                 a_w3 = to_gpu(t1)
                 # ===================================================
-                
+
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
-        
+
 
             else:  # order 4
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
@@ -1244,7 +1248,6 @@ class SpectrumCalculator:
                 single_spectrum = self.c4(a_w, a_w_corr) / (self.config.delta_t * (single_window ** order).sum())
 
             self.store_single_spectrum(single_spectrum, order)
-
 
     def __prep_f_and_S_arrays(self, orders, f_all_in):
         """
@@ -1569,15 +1572,16 @@ class SpectrumCalculator:
                 raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
                                  f"decreasing the resolution of the spectra or the variable m_var.")
             else:
-                print(f"Values have been changed due to too little data. old: m_var = {self.config.m_var}, new: m_var = {m_var}")
+                print(
+                    f"Values have been changed due to too little data. old: m_var = {self.config.m_var}, new: m_var = {m_var}")
             self.config.m_var = m_var
 
         if self.config.m_stationarity is not None:
             if number_of_spectra < self.config.m_stationarity:
-                     raise ValueError(
-                         f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
-                         f"to visualize changes in the power spectrum over time. Consider "
-                         f"decreasing the resolution of the spectra or the variable m_stationary.")
+                raise ValueError(
+                    f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
+                    f"to visualize changes in the power spectrum over time. Consider "
+                    f"decreasing the resolution of the spectra or the variable m_stationary.")
 
         print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
@@ -1651,12 +1655,12 @@ class SpectrumCalculator:
 
         for order in orders:
             self.m[order] = m
-        
+
         # ===== New alogrithm needs to intitialize matrices only once =====
         self.a_w3_init = a_w3_gen(f_max_ind, self.config.m)
         self.indi = indi(f_max_ind)
         # ==================================================================
-        
+
         single_window, _ = cgw(int(window_points), self.fs)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
@@ -1717,8 +1721,8 @@ class SpectrumCalculator:
 
                 # --------- calculate spectra ----------
                 self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
-                                                window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
-                if n_chunks == self.config.break_after:    
+                                               window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
+                if n_chunks == self.config.break_after:
                     break
 
         self.__store_final_spectra(orders, n_chunks, n_windows)
@@ -1973,4 +1977,3 @@ class SpectrumCalculator:
         from .spectrum_plotter import SpectrumPlotter
         plotter = SpectrumPlotter(self, self.plot_config)
         return plotter.stationarity_plot()
-
