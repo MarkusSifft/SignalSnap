@@ -204,6 +204,7 @@ def calc_a_w3(a_w_all, f_max_ind, m, a_w3, indices, backend):
         # Use advanced indexing to replace certain elements with values
         # from a_w_all
         a_w3[np.arange(f_max_ind // 2), :, :] = a_w_all[indices, 0, :m]
+        a_w3 = a_w3.conj()
 
     elif backend == 'cuda':
         # ----------------------this runs on NVIDIA ONLY----------------------
@@ -1883,6 +1884,11 @@ class SpectrumCalculator:
         print('delta f:', f_list[1] - f_list[0])
 
         self.__prep_f_and_S_arrays(orders, f_list)
+
+        # ===== New alogrithm needs to intitialize matrices only once =====
+        self.a_w3_init = a_w3_gen(f_max_ind, self.config.m)
+        self.indi = indi(f_max_ind)
+        # ==================================================================
 
         single_window, N_window_full = self.calc_single_window()
         self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
