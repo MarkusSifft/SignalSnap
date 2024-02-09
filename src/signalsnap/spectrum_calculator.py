@@ -6,11 +6,9 @@
 # https://opensource.org/licenses/BSD-3-Clause
 
 import h5py
-import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
-import plotly.graph_objects as go
 
 import arrayfire as af
 from arrayfire.arith import conjg as conj
@@ -18,10 +16,8 @@ from arrayfire.interop import from_ndarray as to_gpu
 from arrayfire.signal import fft_r2c
 from arrayfire.statistics import mean
 
-from matplotlib.colors import LinearSegmentedColormap
-from numba import njit, prange
+from numba import njit
 from scipy.fft import rfftfreq
-from scipy.ndimage.filters import gaussian_filter
 from tqdm.auto import tqdm
 
 from .spectrum_config import SpectrumConfig
@@ -29,7 +25,7 @@ from .plot_config import PlotConfig
 try:
     import torch
 except ImportError:
-    print("Failed to import torch!")
+    print("Failed to import torch. This is only a problem when you want to use the CUDA backend.")
 
 
 class MissingValueError(Exception):
