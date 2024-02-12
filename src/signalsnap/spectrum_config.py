@@ -92,8 +92,8 @@ class SpectrumConfig:
             raise ValueError("group_key must be a string or None.")
         if dataset is not None and not isinstance(dataset, str):
             raise ValueError("dataset must be a string or None.")
-        if delta_t is not None and (not isinstance(delta_t, float) or delta_t <= 0):
-            raise ValueError("delta_t must be a positive float or None.")
+        #if delta_t is not None and (not isinstance(delta_t, float) or delta_t <= 0):
+        #    raise ValueError("delta_t must be a positive float or None.")
         if data is not None and not isinstance(data, np.ndarray):
             raise ValueError("data must be a numpy array or None.")
         if corr_data is not None and not isinstance(corr_data, np.ndarray):
