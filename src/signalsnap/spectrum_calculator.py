@@ -974,6 +974,37 @@ class SpectrumCalculator:
         else:
             return main_data
 
+    def import_corr_data(self):
+        """
+        Helper function to load data from h5 file into a numpy array.
+        Imports data in the .h5 format with structure group_key -> data + attrs[dt].
+        Parameters such as 'full_import', 'path', 'group_key', and 'dataset' are obtained from the config attribute.
+
+        Returns
+        -------
+        numpy.ndarray
+            Simulation result if 'full_import' is True; otherwise, returns a pointer to the data in the h5 file.
+        float
+            Inverse sampling rate (only if 'delta_t' in config is None).
+
+        Notes
+        -----
+        Ensure that the config attribute is properly set before calling this method, and that the paths and keys correspond to existing elements in the h5 file.
+        """
+
+        main = h5py.File(self.config.corr_path, 'r')
+        if self.config.corr_group_key == '':
+            main_data = main[self.config.corr_dataset]
+        else:
+            main_group = main[self.config.corr_group_key]
+            main_data = main_group[self.config.corr_dataset]
+        if self.config.delta_t is None:
+            self.config.delta_t = main_data.attrs['dt']
+        if self.config.full_import:
+            return main_data[()]
+        else:
+            return main_data
+
     def save_spec(self, save_path, remove_S_stationarity=False):
         """
         Save the SpectrumCalculator object to a file, removing pointers and the full dataset before saving.
@@ -1588,7 +1619,7 @@ class SpectrumCalculator:
 
         # Check m_var and m_stationarity
         number_of_spectra = n_data_points // (window_points * m + window_points // 2)
-        if number_of_spectra < self.config.m_var:
+        if number_of_spectra < self.config.m_var and not self.config.turbo_mode:
             m_var = n_data_points // (window_points * m + window_points // 2)
             if m_var < 2:
                 raise ValueError(f"Not enough data points to estimate error from {self.config.m_var} spectra. Consider "
@@ -1598,14 +1629,15 @@ class SpectrumCalculator:
                     f"Values have been changed due to too little data. old: m_var = {self.config.m_var}, new: m_var = {m_var}")
             self.config.m_var = m_var
 
-        if self.config.m_stationarity is not None:
+        if self.config.m_stationarity is not None and not self.config.turbo_mode:
             if number_of_spectra < self.config.m_stationarity:
                 raise ValueError(
                     f"Not enough data points to calculate {self.config.m_stationarity} different spectra "
                     f"to visualize changes in the power spectrum over time. Consider "
                     f"decreasing the resolution of the spectra or the variable m_stationary.")
 
-        print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
+        if self.config.verbose:
+            print('T_window: {:.3e} {}'.format(window_points * self.config.delta_t, self.t_unit))
         self.window_points = window_points
 
         n_spectra = int(np.floor(n_data_points / (m * window_points)))
@@ -1668,12 +1700,11 @@ class SpectrumCalculator:
 
         n_chunks = 0
 
-        if self.config.corr_data is None and not self.config.corr_default == 'white_noise' and self.config.corr_path is not None:
-            self.config.corr_data = self.import_data()
-        else:
-            self.config.corr_data = None
+        if self.config.corr_path is not None:
+            self.config.corr_data = self.import_corr_data()
 
         m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
+        self.window_points = window_points
 
         for order in orders:
             self.m[order] = m
