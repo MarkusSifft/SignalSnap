@@ -1660,6 +1660,59 @@ class SpectrumCalculator:
 
         return m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_spectra
 
+    def check_minimum_window_length(self, n_parts=4):
+
+        # -------data setup---------
+        if self.config.data is None:
+            self.data = self.import_data()
+        else:
+            self.data = self.config.data
+        if self.config.delta_t is None:
+            raise MissingValueError('Missing value for delta_t')
+
+        # Function to calculate autocorrelation using FFT
+        def autocorrelation_via_fft(x):
+            n = len(x)
+            # print('n:', n)
+            f = np.fft.fft(x - np.mean(x))
+            result = np.fft.ifft(f * np.conjugate(f)).real
+            # print('1:', result.shape)
+            result = result[:n]
+            result /= result[0]  # Normalize the result
+            return result
+
+        # Splitting the dataset into 10 parts
+        data_length = self.data.shape[0]
+        part_length = data_length // n_parts
+        datasets = [self.data[i * part_length:(i + 1) * part_length] for i in range(n_parts)]
+
+        # Calculating autocorrelation for each part using FFT
+        autocorrelations_fft = np.array([autocorrelation_via_fft(dataset) for dataset in datasets])
+
+        # Calculating mean and standard deviation for each delta_t
+        mean_autocorr_fft = np.mean(autocorrelations_fft, axis=0)
+
+        # Plotting the autocorrelation with error bars
+        delta_t = self.config.delta_t
+        n_points = part_length // 2  # Restrict to realistic delta_t values
+
+        # plt.errorbar(np.arange(n_points) * delta_t, mean_autocorr_fft[:n_points], yerr=std_autocorr_fft[:n_points], fmt='-o', label='Mean autocorrelation ± σ')
+        # plt.plot(np.arange(n_points) * delta_t, mean_autocorr_fft[:n_points], '-', label='Mean autocorrelation ± σ')
+        # plt.xlabel('Time lag (delta_t)')
+        # plt.ylabel('Autocorrelation')
+        # plt.title('Autocorrelation with Error Bars using FFT')
+        # plt.legend()
+        ##plt.ylim([0,200])
+        # plt.yscale('log')
+        # plt.show()
+
+        # Finding the largest significant delta_t
+        largest_significant_delta_t = np.where(mean_autocorr_fft[:n_points] < np.zeros(n_points))[0][0]
+
+        print("The largest delta_t for significant autocorrelation:", largest_significant_delta_t * delta_t, 's',
+              'corresponds to', 1 / (largest_significant_delta_t * delta_t), self.config.f_unit)
+        print("A window length of at least:", 10 * largest_significant_delta_t * delta_t, self.t_unit, 'is recommended')
+
     def calc_spec(self):
         """
         Calculation of spectra of orders 1 to 4 with the ArrayFire library.
@@ -1705,6 +1758,7 @@ class SpectrumCalculator:
 
         m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
         self.window_points = window_points
+        self.n_windows = n_windows
 
         for order in orders:
             self.m[order] = m
