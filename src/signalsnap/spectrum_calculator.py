@@ -2000,6 +2000,8 @@ class SpectrumCalculator:
         self.config.delta_t = self.T_window / N_window_full  # 70 as defined in function apply_window(...)
 
         # zeros_on_gpu = to_gpu(1j * np.zeros_like(w_list))
+        a_w_all = 0 * 1j * np.ones((w_list.shape[0], self.config.m))
+        a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
 
         for frame_number in tqdm(range(n_windows)):
 
@@ -2020,9 +2022,6 @@ class SpectrumCalculator:
             for is_interlaced, frame in iterator:
 
                 n_chunks += 1
-
-                a_w_all = 0 * 1j * np.ones((w_list.shape[0], self.config.m))
-                a_w_all_gpu = to_gpu(a_w_all.reshape((len(f_list), 1, self.config.m), order='F'))
 
                 for i, t_clicks in enumerate(frame):
 
