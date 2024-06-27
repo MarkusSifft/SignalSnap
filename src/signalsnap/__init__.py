@@ -9,3 +9,4 @@ from .spectrum_calculator import SpectrumCalculator, load_spec
 from .spectrum_config import SpectrumConfig
 from .plot_config import PlotConfig
 from .spectrum_plotter import SpectrumPlotter
+__version__ = "1.0.11"
