@@ -29,14 +29,25 @@ class SpectrumConfig:
 
     Correlation Parameters
     ----------------------
-    corr_path : str, optional
+    (corr data, data3 and data4)
+    corr_path/path3/path4 : str, optional
         Path to h5 file with second signal for correlation. Default is None.
-    corr_group_key : str, optional
+    corr_group_key/group_key3/group_key4 : str, optional
         Group key for h5 file with correlation signal. Default is None.
-    corr_dataset : str, optional
+    corr_dataset/dataset3/dataset4 : str, optional
         Name of the dataset in h5 file with correlation signal. Default is None.
     corr_shift : int, optional
-        Non-negative integer or None. Default is 0.
+        Non-negative integer or None. Default is 0. This shift will be applied for
+        data3 and data4 as well
+    combination3 : str, needed for cross correlations only
+        The combination of data to caluclate bispectrum.
+        examples:
+            2_122 means 2 data sets for correlation using c_3(X, Y, Y) for computations
+            or
+            2_112 means 2 data sets for correlation using c_3(X, X, Y) for computations
+            for three data sets there is only one combination allowed c_3(X, Y, Z)
+    combination4: str, needed for cross correlations only
+        The combination of data to caluclate trispectrum.
 
     Frequency Parameters
     --------------------
@@ -77,6 +88,21 @@ class SpectrumConfig:
     -----
     Ensure that the provided paths, group keys, and dataset names are valid, as this class does not handle file reading.
     """
+    
+    ALLOWED_COMBINATION3 = {'2_122': '1, 2, 2',
+                            '2_112': '1, 1, 2'}
+
+    ALLOWED_COMBINATION4 = {'4_1234': '1, 2, 3, 4',
+                            '4_1324': '1, 3, 2, 4',
+                            '4_1423': '1, 4, 2, 3',
+                            '3_1233': '1, 2, 3, 3',
+                            '3_1323': '1, 3, 2, 3',
+                            '3_1322': '1, 3, 2, 2',
+                            '3_1223': '1, 2, 2, 3',
+                            '3_2311': '2, 3, 1, 1', 
+                            '3_1213': '1, 2, 1, 3',
+                            '2_1212': '1, 2, 1, 2',
+                            '2_1122': '1, 2, 1, 2'}
 
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None,
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
@@ -84,7 +110,9 @@ class SpectrumConfig:
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True,
                  random_phase=False,
-                 rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
+                 rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False,
+                 combination3=None, combination4=None, path3=None, group_key3=None, dataset3=None, data3=None,
+                 data4=None, path4=None, group_key4=None, dataset4=None):
 
         if path is not None and not isinstance(path, str):
             raise ValueError("path must be a string or None.")
@@ -173,6 +201,12 @@ class SpectrumConfig:
                 if order_in == 'all':
                     order_in = [1, 2, 4]
                     print("Order 3 has been removed from order_in as f_min must be 0 to calculate the bispectrum.")
+        
+        if combination3 is not None and combination3 not in self.ALLOWED_COMBINATION3:
+            raise ValueError(f'Invalid input {combination3}. Must be None or one of {list(self.ALLOWED_COMBINATION3.keys())}.')
+
+        if combination4 is not None and combination4 not in self.ALLOWED_COMBINATION4:
+            raise ValueError(f'Invalid input {combination4}. Must be None or one of {list(self.ALLOWED_COMBINATION4.keys())}.')
 
         self.path = path
         self.group_key = group_key
@@ -206,3 +240,16 @@ class SpectrumConfig:
         self.full_import = full_import
         self.show_first_frame = show_first_frame
         self.turbo_mode = turbo_mode
+
+        self.combination3 = combination3
+        self.combination4 = combination4
+
+        self.path3 = path3
+        self.group_key3 = group_key3
+        self.dataset3 = dataset3
+        self.data3 = data3
+
+        self.path4 = path4
+        self.group_key4 = group_key4
+        self.dataset4 = dataset4
+        self.data4 = data4
