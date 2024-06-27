@@ -17,8 +17,9 @@ import plotly.graph_objects as go
 
 
 class SpectrumPlotter:
-    def __init__(self, spectrum_calculator: SpectrumCalculator, plot_config: PlotConfig):
+    def __init__(self, spectrum_calculator: SpectrumCalculator, config: SpectrumConfig, plot_config: PlotConfig):
         self.spectrum_calculator = spectrum_calculator
+        self.config = config
         self.plot_config = plot_config
 
     def __import_spec_data_for_plotting(self, s_data, s_err, order):
@@ -172,13 +173,20 @@ class SpectrumPlotter:
                            linewidth=2, label=r"$%i\sigma$" % (i + 1), alpha=0.5)
 
         ax[0].plot(s_f_plot[order], s_data_plot[order], color=[0, 0.5, 0.9], linewidth=3)
-
         ax[0].tick_params(axis='both', direction='in')
-        ax[0].set_ylabel(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", labelpad=13,
-                         fontdict={'fontsize': 14})
-        ax[0].set_xlabel(r"$\omega / 2\pi$ (" + self.spectrum_calculator.config.f_unit + r")", labelpad=13,
-                         fontdict={'fontsize': 14})
-        ax[0].set_title(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
+        if self.config.corr_data is not None:
+            ax[0].set_ylabel(r"$S^{(2)}_{1, 2}$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", labelpad=13,
+                            fontdict={'fontsize': 14})
+            ax[0].set_xlabel(r"$\omega / 2\pi$ (" + self.spectrum_calculator.config.f_unit + r")", labelpad=13,
+                            fontdict={'fontsize': 14})
+            ax[0].set_title(r"$S^{(2)}_{1, 2}$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
+
+        else:
+            ax[0].set_ylabel(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", labelpad=13,
+                            fontdict={'fontsize': 14})
+            ax[0].set_xlabel(r"$\omega / 2\pi$ (" + self.spectrum_calculator.config.f_unit + r")", labelpad=13,
+                            fontdict={'fontsize': 14})
+            ax[0].set_title(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
 
         if self.plot_config.broken_lims is not None:
             ylims = ax[0].get_ylim()
@@ -262,7 +270,61 @@ class SpectrumPlotter:
         ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + self.spectrum_calculator.config.f_unit + r")",
                             fontdict={'fontsize': 14})
         ax[axis].tick_params(axis='both', direction='in')
+        
+        if self.plot_config.green_alpha == 0 and order == 3:
+            if self.config.data3 is not None and self.config.corr_data is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(3)}}_{{1, 2, 3}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$)',
+                    fontdict={'fontsize': 16})
+            elif self.config.corr_data is not None and self.config.combination3 is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(3)}}_{{{self.config.ALLOWED_COMBINATION3[self.config.combination3]}}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$)',
+                    fontdict={'fontsize': 16})
+            else:
+                ax[axis].set_title(
+                    r'$S^{(3)}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$)',
+                    fontdict={'fontsize': 16})
+        elif self.plot_config.green_alpha != 0 and order == 3:
+            if self.config.data3 is not None and self.config.corr_data is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(3)}}_{{1, 2, 3}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$) (%i$\sigma$ confidence)' % (
+                    self.plot_config.sigma),
+                    fontdict={'fontsize': 16})
+            elif self.config.corr_data is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(3)}}_{{{self.config.ALLOWED_COMBINATION3[self.config.combination3]}}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$) (%i$\sigma$ confidence)' % (
+                    self.plot_config.sigma),
+                    fontdict={'fontsize': 16})
+            else:
+                ax[axis].set_title(
+                    r'$S^{(3)}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-2}$) (%i$\sigma$ confidence)' % (
+                    self.plot_config.sigma),
+                    fontdict={'fontsize': 16})
 
+
+        if self.plot_config.green_alpha == 0 and order == 4:
+            if self.config.data3 is not None or self.config.corr_data is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(4)}}_{{{self.config.ALLOWED_COMBINATION4[self.config.combination4]}}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-3}$)',
+                    fontdict={'fontsize': 16})
+            else:
+                ax[axis].set_title(
+                    r'$S^{(4)}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-4}$)',
+                    fontdict={'fontsize': 16})
+        
+        
+        if self.plot_config.green_alpha != 0 and order == 4:
+            if self.config.data3 is not None or self.config.corr_data is not None:
+                ax[axis].set_title(
+                    fr'$S^{{(4)}}_{{{self.config.ALLOWED_COMBINATION4[self.config.combination4]}}} $ (' + self.spectrum_calculator.config.f_unit + r'$^{-3}$)(%i$\sigma$ confidence)' % (
+                    self.plot_config.sigma),
+                    fontdict={'fontsize': 16})
+            else:
+                ax[axis].set_title(
+                    r'$S^{(4)}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-4}$) (%i$\sigma$ confidence)' % (
+                    self.plot_config.sigma),
+                    fontdict={'fontsize': 16})
+        """
         if self.plot_config.green_alpha == 0:
             ax[axis].set_title(
                 r'$S^{(' + f'{order}' + r')}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-' + f'{order - 1}' + r'}$)',
@@ -272,6 +334,7 @@ class SpectrumPlotter:
                 r'$S^{(' + f'{order}' + r')}_z $ (' + self.spectrum_calculator.config.f_unit + r'$^{-' + f'{order - 1}' + r'}$) (%i$\sigma$ confidence)' % (
                     self.plot_config.sigma),
                 fontdict={'fontsize': 16})
+        """
         fig.colorbar(c, ax=(ax[axis]))
 
         if self.plot_config.broken_lims is not None:
