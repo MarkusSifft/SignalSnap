@@ -102,7 +102,7 @@ class SpectrumConfig:
                             '3_2311': '2, 3, 1, 1', 
                             '3_1213': '1, 2, 1, 3',
                             '2_1212': '1, 2, 1, 2',
-                            '2_1122': '1, 2, 1, 2'}
+                            '2_1122': '1, 1, 2, 2'}
 
     def __init__(self, path=None, group_key=None, dataset=None, delta_t=None, data=None,
                  corr_data=None, corr_path=None, corr_group_key=None, corr_dataset=None,
