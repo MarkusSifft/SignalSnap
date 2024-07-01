@@ -759,8 +759,76 @@ class SpectrumCalculator:
                                                 2 * d_1_mean * d_2_mean * d_3_mean)
         return s3
 
-# ==================== new compact algorithm for c4 =================================
-    def c4(self, a_w, a_w_corr):
+# ==================== c4 for combinations =================================
+    def c4(self, a_w1, a_w2, a_w3, a_w4):
+        """
+            Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
+
+            Parameters
+            ----------
+            a_w1 : array
+                Fourier coefficients of the signal.
+            a_w2 : array
+                Fourier coefficients of the signal or a second signal.
+            a_w3 : array
+                Fourier coefficients of the signal or a third signal.
+            a_w4 : array
+                Fourier coefficients of the signal or a fourth signal.
+
+            Returns
+            -------
+            s4 : array
+                The c4 estimator as a matrix.
+
+            Notes
+            -----
+            The value of `m`, the number of windows used for the calculation of one spectrum,
+            is obtained from the `config` object associated with this instance.
+            """
+
+        m = self.config.m
+
+        a_w2_conj = conj(a_w2)
+        a_w4_conj = conj(a_w4)
+
+        if self.config.coherent:
+            sum_11c22c = af.matmulNT(a_w1 * a_w2_conj, a_w3 * a_w4_conj)
+            sum_11c22c_m = mean(sum_11c22c, dim=2)
+            s4 = sum_11c22c_m
+        else:
+            a_w1_mean = a_w1 - af.tile(mean(a_w1, dim=2), d0=1, d1=1, d2=a_w1.shape[2])
+            a_w2_conj_mean = a_w2_conj - af.tile(mean(a_w2_conj, dim=2), d0=1, d1=1, d2=a_w2_conj.shape[2])
+            a_w3_mean = a_w3 - af.tile(mean(a_w3, dim=2), d0=1, d1=1, d2=a_w3.shape[2])
+            a_w4_conj_mean = a_w4_conj - af.tile(mean(a_w4_conj, dim=2), d0=1, d1=1, d2=a_w4_conj.shape[2])
+
+            xyzw = af.matmulNT(a_w1_mean * a_w2_conj_mean, a_w3_mean * a_w4_conj_mean)
+            xyzw_mean = mean(xyzw, dim=2)
+            
+            xy_mean = mean(a_w1_mean * a_w2_conj_mean, dim=2)
+            zw_mean = mean(a_w3_mean * a_w4_conj_mean, dim=2)
+            xy_zw_mean = af.matmulNT(xy_mean, zw_mean)
+
+            xz_mean = mean(af.matmulNT(a_w1_mean, a_w3_mean), dim=2)
+            yw_mean = mean(af.matmulNT(a_w2_conj_mean, a_w4_conj_mean), dim=2)
+            xz_yw_mean = xz_mean * yw_mean
+
+            xw_mean = mean(af.matmulNT(a_w1_mean, a_w4_conj_mean), dim=2)
+            yz_mean = mean(af.matmulNT(a_w2_conj_mean, a_w3_mean), dim=2)
+            xw_yz_mean = xw_mean * yz_mean
+
+            s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
+                    (m + 1) * xyzw_mean -
+                    (m - 1) * (
+                            xy_zw_mean + xz_yw_mean + xw_yz_mean
+                    )
+            )
+        return s4
+
+# ======================================================================================
+
+
+# ==================== compact algorithm for c4 =================================
+    def c4_old2(self, a_w, a_w_corr):
         """
             Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
 
@@ -974,11 +1042,18 @@ class SpectrumCalculator:
         else:
             return main_data
 
-    def import_corr_data(self):
+    def import_corr_data(self, which_data):
         """
         Helper function to load data from h5 file into a numpy array.
         Imports data in the .h5 format with structure group_key -> data + attrs[dt].
         Parameters such as 'full_import', 'path', 'group_key', and 'dataset' are obtained from the config attribute.
+
+        Parameters
+        ----------
+        which data:
+            2 for corr_data
+            3 for data3
+            4 for data4
 
         Returns
         -------
@@ -991,19 +1066,47 @@ class SpectrumCalculator:
         -----
         Ensure that the config attribute is properly set before calling this method, and that the paths and keys correspond to existing elements in the h5 file.
         """
-
-        main = h5py.File(self.config.corr_path, 'r')
-        if self.config.corr_group_key == '':
-            main_data = main[self.config.corr_dataset]
-        else:
-            main_group = main[self.config.corr_group_key]
-            main_data = main_group[self.config.corr_dataset]
-        if self.config.delta_t is None:
-            self.config.delta_t = main_data.attrs['dt']
-        if self.config.full_import:
-            return main_data[()]
-        else:
-            return main_data
+        if which_data == 2:
+            main = h5py.File(self.config.corr_path, 'r')
+            if self.config.corr_group_key == '':
+                main_data = main[self.config.corr_dataset]
+            else:
+                main_group = main[self.config.corr_group_key]
+                main_data = main_group[self.config.corr_dataset]
+            if self.config.delta_t is None:
+                self.config.delta_t = main_data.attrs['dt']
+            if self.config.full_import:
+                return main_data[()]
+            else:
+                return main_data
+            
+        elif which_data == 3:
+            main = h5py.File(self.config.path3, 'r')
+            if self.config.group_key3 == '':
+                main_data = main[self.config.dataset3]
+            else:
+                main_group = main[self.config.group_key3]
+                main_data = main_group[self.config.dataset3]
+            if self.config.delta_t is None:
+                self.config.delta_t = main_data.attrs['dt']
+            if self.config.full_import:
+                return main_data[()]
+            else:
+                return main_data
+            
+        elif which_data == 4:
+            main = h5py.File(self.config.path4, 'r')
+            if self.config.group_key4 == '':
+                main_data = main[self.config.dataset4]
+            else:
+                main_group = main[self.config.group_key4]
+                main_data = main_group[self.config.dataset4]
+            if self.config.delta_t is None:
+                self.config.delta_t = main_data.attrs['dt']
+            if self.config.full_import:
+                return main_data[()]
+            else:
+                return main_data
 
     def save_spec(self, save_path, remove_S_stationarity=False):
         """
@@ -1210,8 +1313,8 @@ class SpectrumCalculator:
         return t, t_main, overlap_s2, overlap_s3, overlap_s4
 
     def fourier_coeffs_to_spectra(self, orders, a_w_all_gpu, f_max_ind, f_min_ind,
-                                  single_window, window=None, chunk_corr_gpu=None,
-                                  window_points=None):
+                                  single_window, window=None, a_w_all_corr=None,
+                                  a_w3_all_gpu=None, a_w4_all_gpu=None, window_points=None):
         """
         Helper function to calculate the (1,2,3,4)-order cumulant from the Fourier coefficients of the windows in
         one frame.
@@ -1223,7 +1326,7 @@ class SpectrumCalculator:
         ----------
         orders : list of {1, 2, 3, 4}
             Orders of the spectra to be calculated.
-        a_w_all_gpu : array_like
+        a_w_all_corr/a_w3_all_gpu/a_w4_all_gpu : array_like
             A matrix containing the Fourier coefficients of the windows.
         f_max_ind : int
             Index of the maximum frequency in the frequency array to calculate the spectral values at.
@@ -1259,45 +1362,90 @@ class SpectrumCalculator:
                     a_w = a_w_all_gpu
 
                 if self.config.corr_data is not None:
-                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                    #a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                     single_spectrum = self.c2(a_w, a_w_corr) / (
                             self.config.delta_t * (single_window ** order).sum())
-
                 else:
                     single_spectrum = self.c2(a_w, a_w) / (
                             self.config.delta_t * (single_window ** order).sum())
-
+                    
             elif order == 3:
-                a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind // 2))), dim=0)
-                a_w2 = a_w1
+                if self.config.corr_data is not None and self.config.data3 is not None:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                    a_w2 = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                    t0 = a_w3_all_gpu.to_ndarray()
+                    t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
+                    a_w3 = to_gpu(t1)
+                    single_spectrum = self.c3(a_w, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
-                # a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
-
-                # ======== New algorithm divides the steps ==========
-                t0 = a_w_all_gpu.to_ndarray()
-                t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
-                a_w3 = to_gpu(t1)
-                # ===================================================
-
-                single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
-
-
-            else:  # order 4
+                elif self.config.corr_data is not None:
+                    if self.config.combination3 == '2_122':
+                        a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                        a_w2 = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                        t0 = a_w_all_corr.to_ndarray()
+                        t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
+                        a_w3 = to_gpu(t1)
+                        single_spectrum = self.c3(a_w, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
                 
-                
-                a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    elif self.config.combination3 == '2_112':
 
-                if self.config.corr_data is not None:
-                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
-                    if self.config.random_phase:
-                        a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points)
-
-                    a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                        a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                        t0 = a_w_all_corr.to_ndarray()
+                        t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
+                        a_w3 = to_gpu(t1)
+                        single_spectrum = self.c3(a_w, a_w, a_w3) / (self.config.delta_t * (single_window ** order).sum())
                 else:
-                    a_w_corr = a_w
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind//2))), dim=0)
+                    t0 = a_w_all_gpu.to_ndarray()
+                    t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
+                    a_w3 = to_gpu(t1)
+                    single_spectrum = self.c3(a_w, a_w, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
-                single_spectrum = self.c4(a_w, a_w_corr) / (self.config.delta_t * (single_window ** order).sum())
+            else: # order 4
+                if self.config.corr_data is not None and self.config.data3 is not None and self.config.data4 is not None:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w2 = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w3 = af.lookup(a_w3_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w4 = af.lookup(a_w4_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    if self.config.combination4 == '4_1234':
+                        single_spectrum = self.c4(a_w, a_w2, a_w3, a_w4) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '4_1324':
+                        single_spectrum = self.c4(a_w, a_w3, a_w2, a_w4) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '4_1423':
+                        single_spectrum = self.c4(a_w, a_w4, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
+                
+                elif self.config.corr_data is not None and self.config.data3 is not None:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w2 = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w3 = af.lookup(a_w3_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    if self.config.combination4 == '3_1233':
+                        single_spectrum = self.c4(a_w, a_w2, a_w3, a_w3) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '3_1323':
+                        single_spectrum = self.c4(a_w, a_w3, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '3_1322':
+                        single_spectrum = self.c4(a_w, a_w3, a_w2, a_w2) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '3_1223':
+                        single_spectrum = self.c4(a_w, a_w2, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '3_2311':
+                        single_spectrum = self.c4(a_w2, a_w3, a_w, a_w) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '3_1213':
+                        single_spectrum = self.c4(a_w, a_w2, a_w, a_w3) / (self.config.delta_t * (single_window ** order).sum())
+                    else:
+                        print('Wrong combination!') # due to reoccuring Heisenbugs if you delete it... the program would crash.. most probably
+                
+                elif self.config.corr_data is not None:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    a_w2 = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    if self.config.combination4 == '2_1212':
+                        single_spectrum = self.c4(a_w, a_w2, a_w, a_w2) / (self.config.delta_t * (single_window ** order).sum())
+                    elif self.config.combination4 == '2_1122':
+                        single_spectrum = self.c4(a_w, a_w, a_w2, a_w2) / (self.config.delta_t * (single_window ** order).sum())
+                    else:
+                        print('Wrong combination!') # due to reoccuring Heisenbugs if you delete it... the program would crash.. most probably
+                else:
+                    a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
+                    single_spectrum = self.c4(a_w, a_w, a_w, a_w) / (self.config.delta_t * (single_window ** order).sum())
 
             self.store_single_spectrum(single_spectrum, order)
             
@@ -1754,7 +1902,11 @@ class SpectrumCalculator:
         n_chunks = 0
 
         if self.config.corr_path is not None:
-            self.config.corr_data = self.import_corr_data()
+            self.config.corr_data = self.import_corr_data(which_data=2)
+        if self.config.path3 is not None:
+            self.config.data3 = self.import_corr_data(which_data=3)
+        if self.config.path4 is not None:
+            self.config.data4 = self.import_corr_data(which_data=4)
 
         m, window_points, freq_all_freq, f_max_ind, f_min_ind, n_windows = self.setup_data_calc_spec(orders)
         self.window_points = window_points
@@ -1798,12 +1950,44 @@ class SpectrumCalculator:
                 if self.config.corr_default == 'white_noise':  # use white noise to check for false correlations
                     chunk_corr = np.random.randn(window_points, 1, m)
                     chunk_corr_gpu = to_gpu(chunk_corr)
+
+                    chunk_a_w3 = np.random.randn(window_points, 1, m)
+                    chunk_a_w3_gpu = to_gpu(chunk_a_w3)
+                    chunk_a_w4 = np.random.randn(window_points, 1, m)
+                    chunk_a_w4_gpu = to_gpu(chunk_a_w4)
+
+                elif self.config.corr_data is not None and self.config.data3 is not None and self.config.data4 is not None:
+                    chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
+
+                    chunk_a_w3 = self.config.data3[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_a_w3_gpu = to_gpu(chunk_a_w3.reshape((window_points, 1, m), order='F'))
+                    chunk_a_w4 = self.config.data4[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_a_w4_gpu = to_gpu(chunk_a_w4.reshape((window_points, 1, m), order='F'))
+
+                elif self.config.corr_data is not None and self.config.data3 is not None:
+                    chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
+
+                    chunk_a_w3 = self.config.data3[int(i * (window_points * m) + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_a_w3_gpu = to_gpu(chunk_a_w3.reshape((window_points, 1, m), order='F'))
+                    chunk_a_w4_gpu = None
+                
                 elif self.config.corr_data is not None:
                     chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
                         (i + 1) * (window_points * m) + self.config.corr_shift)]
                     chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
+                    chunk_a_w3_gpu = None
+                    chunk_a_w4_gpu = None
                 else:
                     chunk_corr_gpu = None
+                    chunk_a_w3_gpu = None
+                    chunk_a_w4_gpu = None
 
                 # ---------count windows-----------
                 n_chunks += 1
@@ -1814,7 +1998,28 @@ class SpectrumCalculator:
                         np.array(m * [np.ones_like(single_window)]).flatten().reshape((window_points, 1, m), order='F'))
                     a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
                 else:
-                    a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                    if self.config.corr_data is not None and self.config.data3 is not None and self.config.data4 is not None:
+                        a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                        a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                        a_w3_all_gpu = fft_r2c(window * chunk_a_w3_gpu, dim0=0, scale=1)
+                        a_w4_all_gpu = fft_r2c(window * chunk_a_w4_gpu, dim0=0, scale=1)
+
+                    elif self.config.corr_data is not None and self.config.data3 is not None:
+                        a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                        a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                        a_w3_all_gpu = fft_r2c(window * chunk_a_w3_gpu, dim0=0, scale=1)
+                        a_w4_all_gpu = None
+                        
+                    elif self.config.corr_data is not None:
+                        a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                        a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                        a_w3_all_gpu = None
+                        a_w4_all_gpu = None
+                    else:
+                        a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                        a_w_all_corr = None
+                        a_w3_all_gpu = None
+                        a_w4_all_gpu = None
 
                 # --------- modify data ---------
                 if self.config.filter_func:
@@ -1828,7 +2033,9 @@ class SpectrumCalculator:
 
                 # --------- calculate spectra ----------
                 self.fourier_coeffs_to_spectra(orders, a_w_all_gpu, f_max_ind, f_min_ind, single_window,
-                                               window, chunk_corr_gpu=chunk_corr_gpu, window_points=window_points)
+                                               window=window, a_w_all_corr=a_w_all_corr,
+                                               a_w3_all_gpu=a_w3_all_gpu, a_w4_all_gpu=a_w4_all_gpu,
+                                               window_points=window_points)
                 if n_chunks == self.config.break_after:
                     break
 
@@ -2076,7 +2283,7 @@ class SpectrumCalculator:
             self.plot_config = PlotConfig()  # Use default plot configuration
 
         from .spectrum_plotter import SpectrumPlotter
-        plotter = SpectrumPlotter(self, self.plot_config)
+        plotter = SpectrumPlotter(self, self.config, self.plot_config)
         return plotter.plot()
 
     def stationarity_plot(self, plot_config: PlotConfig = None):
@@ -2086,5 +2293,5 @@ class SpectrumCalculator:
             self.plot_config = PlotConfig()  # Use default plot configuration
 
         from .spectrum_plotter import SpectrumPlotter
-        plotter = SpectrumPlotter(self, self.plot_config)
+        plotter = SpectrumPlotter(self,  self.plot_config)
         return plotter.stationarity_plot()
