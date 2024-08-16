@@ -1259,7 +1259,7 @@ class SpectrumCalculator:
                     a_w = a_w_all_gpu
 
                 if self.config.corr_data is not None:
-                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=self.config.delta_t)
                     a_w_corr = af.lookup(a_w_all_corr, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                     single_spectrum = self.c2(a_w, a_w_corr) / (
                             self.config.delta_t * (single_window ** order).sum())
@@ -1289,7 +1289,7 @@ class SpectrumCalculator:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
-                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=1)
+                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=self.config.delta_t)
                     if self.config.random_phase:
                         a_w_all_corr = self.add_random_phase(a_w_all_corr, window_points)
 
@@ -1812,9 +1812,9 @@ class SpectrumCalculator:
                 if self.config.rect_win:
                     ones = to_gpu(
                         np.array(m * [np.ones_like(single_window)]).flatten().reshape((window_points, 1, m), order='F'))
-                    a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=1)
+                    a_w_all_gpu = fft_r2c(ones * chunk_gpu, dim0=0, scale=self.config.delta_t)
                 else:
-                    a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=1)
+                    a_w_all_gpu = fft_r2c(window * chunk_gpu, dim0=0, scale=self.config.delta_t)
 
                 # --------- modify data ---------
                 if self.config.filter_func:
