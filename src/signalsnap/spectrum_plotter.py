@@ -301,7 +301,7 @@ class SpectrumPlotter:
         if len(self.plot_config.plot_orders) == 1:
             ax = [ax]
         plt.rc('text', usetex=False)
-        plt.rc('font', size=10)
+        plt.rc('font', size=self.config.fontsize)
         plt.rcParams["axes.axisbelow"] = False
         return fig, ax
 

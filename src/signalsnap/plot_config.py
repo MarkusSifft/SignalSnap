@@ -56,13 +56,14 @@ class PlotConfig:
     def __init__(self, plot_orders=(2, 3, 4), plot_f_max=None, f_min=None, sigma=1, green_alpha=0.3,
                  arcsinh_plot=False, arcsinh_const=0.02, contours=False, s3_filter=0, s4_filter=0,
                  s2_data=None, s2_err=None, s3_data=None, s3_err=None, s4_data=None, s4_err=None,
-                 s2_f=None, s3_f=None, s4_f=None, imag_plot=False, plot_error=True, broken_lims=None):
+                 s2_f=None, s3_f=None, s4_f=None, imag_plot=False, plot_error=True, broken_lims=None, fontsize=10):
 
         if not (isinstance(plot_orders, (tuple, list)) and all(
                 isinstance(order, int) and 1 <= order <= 4 for order in plot_orders)):
             raise ValueError("plot_orders must be a tuple or list of integers between 1 and 4.")
 
         self.plot_orders = plot_orders
+        self.fontsize = fontsize
         self.plot_f_max = self._validate_positive_float(plot_f_max, "plot_f_max")
         self.f_min = self._validate_positive_float(f_min, "f_min")
         self.sigma = self._validate_positive_float(sigma, "sigma")
