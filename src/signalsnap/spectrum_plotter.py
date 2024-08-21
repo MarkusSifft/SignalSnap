@@ -175,9 +175,9 @@ class SpectrumPlotter:
 
         ax[0].tick_params(axis='both', direction='in')
         ax[0].set_ylabel(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", labelpad=13,
-                         fontdict={'fontsize': 14})
+                         fontdict={'fontsize': self.plot_config.label_fontsize})
         ax[0].set_xlabel(r"$\omega / 2\pi$ (" + self.spectrum_calculator.config.f_unit + r")", labelpad=13,
-                         fontdict={'fontsize': 14})
+                         fontdict={'fontsize': self.plot_config.label_fontsize})
         ax[0].set_title(r"$S^{(2)}_z$ (" + self.spectrum_calculator.config.f_unit + r"$^{-1}$)", fontdict={'fontsize': 16})
 
         if self.plot_config.broken_lims is not None:
@@ -258,9 +258,9 @@ class SpectrumPlotter:
                        self.plot_config.plot_f_max])
 
         ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + self.spectrum_calculator.config.f_unit + r")",
-                            fontdict={'fontsize': 14})
+                            fontdict={'fontsize': self.plot_config.label_fontsize})
         ax[axis].set_ylabel(r"$\omega_2 / 2 \pi$ (" + self.spectrum_calculator.config.f_unit + r")",
-                            fontdict={'fontsize': 14})
+                            fontdict={'fontsize': self.plot_config.label_fontsize})
         ax[axis].tick_params(axis='both', direction='in')
 
         if self.plot_config.green_alpha == 0:
@@ -301,8 +301,9 @@ class SpectrumPlotter:
         if len(self.plot_config.plot_orders) == 1:
             ax = [ax]
         plt.rc('text', usetex=False)
-        plt.rc('font', size=self.config.fontsize)
+        plt.rc('font', size=self.plot_config.tick_fontsize)
         plt.rcParams["axes.axisbelow"] = False
+
         return fig, ax
 
     def plot(self):
