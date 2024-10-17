@@ -22,6 +22,7 @@ from tqdm.auto import tqdm
 
 from .spectrum_config import SpectrumConfig
 from .plot_config import PlotConfig
+
 try:
     import torch
 except ImportError:
@@ -740,9 +741,9 @@ class SpectrumCalculator:
             d_12 = d_1 * d_2
             d_123 = d_12 * d_3
             s3 = mean(d_123, dim=2)
-            
+
         # ==================================================
-        else:    
+        else:
             # Calculate products for efficiency
             d_12 = d_1 * d_2
             d_13 = d_1 * d_3
@@ -755,11 +756,11 @@ class SpectrumCalculator:
 
             # Compute c3 estimator using the equation provided
             s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
-                                                d_13_mean * d_2_mean - d_23_mean * d_1_mean +
-                                                2 * d_1_mean * d_2_mean * d_3_mean)
+                                                 d_13_mean * d_2_mean - d_23_mean * d_1_mean +
+                                                 2 * d_1_mean * d_2_mean * d_3_mean)
         return s3
 
-# ==================== new compact algorithm for c4 =================================
+    # ==================== new compact algorithm for c4 =================================
     def c4(self, a_w, a_w_corr):
         """
             Calculation of c4 for trispectrum based on equation 60 in arXiv:1904.12154.
@@ -789,7 +790,7 @@ class SpectrumCalculator:
 
         y = conj(x)
         w = conj(z)
-        
+
         if self.config.coherent:
             sum_11c22c = af.matmulNT(x * y, z * w)
             sum_11c22c_m = mean(sum_11c22c, dim=2)
@@ -803,7 +804,7 @@ class SpectrumCalculator:
 
             xyzw = af.matmulNT(x_mean * y_mean, z_mean * w_mean)
             xyzw_mean = mean(xyzw, dim=2)
-            
+
             xy_mean = mean(x_mean * y_mean, dim=2)
             zw_mean = mean(z_mean * w_mean, dim=2)
             xy_zw_mean = af.matmulNT(xy_mean, zw_mean)
@@ -824,7 +825,6 @@ class SpectrumCalculator:
             )
 
         return s4
-
 
     def c4_old(self, a_w, a_w_corr):
         """
@@ -850,14 +850,14 @@ class SpectrumCalculator:
 
         m = self.config.m
 
-        a_w_conj = conj(a_w) #y
-        a_w_conj_corr = conj(a_w_corr) #w
+        a_w_conj = conj(a_w)  #y
+        a_w_conj_corr = conj(a_w_corr)  #w
 
         ones = to_gpu(np.ones_like(a_w.to_ndarray()[:, :, 0]))
 
         sum_11c22c = af.matmulNT(a_w * a_w_conj, a_w_corr * a_w_conj_corr)  # d1
         sum_11c22c_m = mean(sum_11c22c, dim=2)
-        
+
         if self.config.coherent:
             s4 = sum_11c22c_m
 
@@ -896,19 +896,18 @@ class SpectrumCalculator:
             sum_1c_m = af.matmulNT(sum_1c_m, ones)  # d11'
             sum_2_m = af.matmulNT(ones, sum_2_m)  # d10''
             sum_2c_m = af.matmulNT(ones, sum_2c_m)  # d11''
-            
+
             s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                     (m + 1) * sum_11c22c_m - (m + 1) * (sum_11c2_m * sum_2c_m + sum_11c2c_m * sum_2_m +
                                                         sum_122c_m * sum_1c_m + sum_1c22c_m * sum_1_m)
                     - (m - 1) * (sum_11c_m * sum_22c_m + sum_12_m * sum_1c2c_m + sum_12c_m * sum_1c2_m)
                     + 2 * m * (sum_11c_m * sum_2_m * sum_2c_m + sum_12_m * sum_1c_m * sum_2c_m +
-                            sum_12c_m * sum_1c_m * sum_2_m + sum_22c_m * sum_1_m * sum_1c_m +
-                            sum_1c2c_m * sum_1_m * sum_2_m + sum_1c2_m * sum_1_m * sum_2c_m)
+                               sum_12c_m * sum_1c_m * sum_2_m + sum_22c_m * sum_1_m * sum_1c_m +
+                               sum_1c2c_m * sum_1_m * sum_2_m + sum_1c2_m * sum_1_m * sum_2c_m)
                     - 6 * m * sum_1_m * sum_1c_m * sum_2_m * sum_2c_m
-                    )
+            )
 
         return s4
-    
 
     def add_random_phase(self, a_w, window_size):
         """(Experimental function) Adds a random phase proportional to the frequency to deal with ultra-coherent signals.
@@ -1246,7 +1245,7 @@ class SpectrumCalculator:
         This function makes use of the `config` class object that stores the configuration and parameters
         required for the calculations, including 'm', 'm_var', 'm_stationarity', 'coherent', 'random_phase', etc.
         """
-        
+
         for order in orders:
             if order == 1:
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
@@ -1275,17 +1274,20 @@ class SpectrumCalculator:
                 # a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
 
                 # ======== New algorithm divides the steps ==========
-                t0 = a_w_all_gpu.to_ndarray()
+                if self.config.corr_data is not None:
+                    a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=self.config.delta_t)
+                    t0 = a_w_all_corr.to_ndarray()
+                else:
+                    t0 = a_w_all_gpu.to_ndarray()
+
                 t1 = calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
                 a_w3 = to_gpu(t1)
                 # ===================================================
 
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
 
-
             else:  # order 4
-                
-                
+
                 a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
 
                 if self.config.corr_data is not None:
@@ -1300,7 +1302,6 @@ class SpectrumCalculator:
                 single_spectrum = self.c4(a_w, a_w_corr) / (self.config.delta_t * (single_window ** order).sum())
 
             self.store_single_spectrum(single_spectrum, order)
-            
 
     def __prep_f_and_S_arrays(self, orders, f_all_in):
         """
