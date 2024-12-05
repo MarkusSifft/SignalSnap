@@ -559,6 +559,8 @@ class SpectrumCalculator:
     """
 
     def __init__(self, config: SpectrumConfig):
+
+        self.use_naive_estimator = None
         self.config = config
         self.plot_config = None
         self.T_window = None
@@ -698,7 +700,12 @@ class SpectrumCalculator:
             else:
                 mean_3 = mean(conj(a_w_corr), dim=2)
 
-            s2 = m / (m - 1) * (mean_1 - mean_2 * mean_3)
+            if self.use_naive_estimator:
+                s2 = mean_1 - mean_2 * mean_3
+
+            else:
+                s2 = m / (m - 1) * (mean_1 - mean_2 * mean_3)
+
         return s2
 
     def c3(self, a_w1, a_w2, a_w3):
@@ -754,10 +761,16 @@ class SpectrumCalculator:
             d_means = [mean(d, dim=2) for d in [d_1, d_2, d_3, d_12, d_13, d_23, d_123]]
             d_1_mean, d_2_mean, d_3_mean, d_12_mean, d_13_mean, d_23_mean, d_123_mean = d_means
 
-            # Compute c3 estimator using the equation provided
-            s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
-                                                 d_13_mean * d_2_mean - d_23_mean * d_1_mean +
-                                                 2 * d_1_mean * d_2_mean * d_3_mean)
+            if self.use_naive_estimator:
+                s3 = (d_123_mean - d_12_mean * d_3_mean -
+                                                     d_13_mean * d_2_mean - d_23_mean * d_1_mean +
+                                                     2 * d_1_mean * d_2_mean * d_3_mean)
+
+            else:
+                # Compute c3 estimator using the equation provided
+                s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
+                                                     d_13_mean * d_2_mean - d_23_mean * d_1_mean +
+                                                     2 * d_1_mean * d_2_mean * d_3_mean)
         return s3
 
     # ==================== new compact algorithm for c4 =================================
@@ -817,12 +830,16 @@ class SpectrumCalculator:
             yz_mean = mean(af.matmulNT(y_mean, z_mean), dim=2)
             xw_yz_mean = xw_mean * yz_mean
 
-            s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
-                    (m + 1) * xyzw_mean -
-                    (m - 1) * (
-                            xy_zw_mean + xz_yw_mean + xw_yz_mean
-                    )
-            )
+            if self.use_naive_estimator:
+                s4 = xyzw_mean - (xy_zw_mean + xz_yw_mean + xw_yz_mean)
+
+            else:
+                s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
+                        (m + 1) * xyzw_mean -
+                        (m - 1) * (
+                                xy_zw_mean + xz_yw_mean + xw_yz_mean
+                        )
+                )
 
         return s4
 
