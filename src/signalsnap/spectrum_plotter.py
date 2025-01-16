@@ -236,8 +236,13 @@ class SpectrumPlotter:
         norm = colors.TwoSlopeNorm(vmin=-abs_max, vcenter=0, vmax=abs_max)
         # norm = MidpointNormalize(midpoint=0, vmin=vmin, vmax=vmax)
 
-        y, x = np.meshgrid(s_f_plot[order], s_f_plot[order])
+        if s_f_plot[order].min() < 0: # True in case of full_bispectrum
+            x, y = np.meshgrid(s_f_plot[order], s_f_plot[order][s_f_plot[order].shape[0]//2:])
+        else:
+            y, x = np.meshgrid(s_f_plot[order], s_f_plot[order])
+
         z = s_data_plot[order].copy()
+
         err_matrix = np.zeros_like(z)
         if s_err_plot[order] is not None or self.spectrum_calculator.S_err[order] is not None:
             err_matrix[np.abs(s_data_plot[order]) < s_err_plot[order]] = 1
@@ -252,10 +257,15 @@ class SpectrumPlotter:
 
         if self.plot_config.plot_f_max is None:
             plot_f_max = s_f_plot[order].max()
+        else:
+            plot_f_max = self.plot_config.plot_f_max
+
         if self.plot_config.f_min is None:
             f_min = s_f_plot[order].min()
-        ax[axis].axis([self.plot_config.f_min, self.plot_config.plot_f_max, self.plot_config.f_min,
-                       self.plot_config.plot_f_max])
+        else:
+            f_min = self.plot_config.f_min
+
+        ax[axis].axis([f_min, plot_f_max, f_min, plot_f_max])
 
         ax[axis].set_xlabel(r"$\omega_1 / 2 \pi$ (" + self.spectrum_calculator.config.f_unit + r")",
                             fontdict={'fontsize': self.plot_config.label_fontsize})
