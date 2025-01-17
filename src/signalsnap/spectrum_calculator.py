@@ -1321,8 +1321,8 @@ class SpectrumCalculator:
                     t0 = a_w_all_gpu.to_ndarray()
 
                 if self.config.full_bispectrum:
-                    a_w1 = af.join(0, af.conjg(af.flip(a_w1[1:], 0)), a_w1) # MAYBE FALSCH
-                    t0 = np.concatenate((t0, np.conj(t0[:0:-1]))) # MAYBE FALSCH
+                    a_w1 = af.join(0, af.conjg(af.flip(a_w1[1:], 0)), a_w1)
+                    t0 = np.concatenate((t0, np.conj(t0[:0:-1])))
 
                 t1 = self.calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
                 a_w3 = to_gpu(t1)
@@ -1504,10 +1504,11 @@ class SpectrumCalculator:
             if not self.config.turbo_mode:
                 # self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
-                self.S_err[order] = 1 / (self.number_of_error_estimates) * np.sqrt(self.S_err[order])
+                self.S_err[order] = 1 / np.sqrt(self.number_of_error_estimates) * (
+                    np.sqrt(self.S_err[order].real) + 1j * np.sqrt(self.S_err[order].imag))
 
                 if self.config.interlaced_calculation:
-                    self.S_err[order] /= 2
+                    self.S_err[order] /= np.sqrt(2)
 
     def __find_datapoints_in_windows(self, start_index, start_index_interlaced, frame_number, enough_data):
         """

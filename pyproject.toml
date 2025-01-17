@@ -5,7 +5,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "signalsnap"
-version = "1.0.15"
+version = "1.0.16"
+dynamic = ["2.3"]
 authors = [
 { name="Markus Sifft", email="markus.sifft@rub.de" },
 ]
