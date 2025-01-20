@@ -1504,7 +1504,7 @@ class SpectrumCalculator:
             if not self.config.turbo_mode:
                 # self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
-                self.S_err[order] = 1 / np.sqrt(self.number_of_error_estimates) * (
+                self.S_err[order] = 1 / self.number_of_error_estimates * (
                     np.sqrt(self.S_err[order].real) + 1j * np.sqrt(self.S_err[order].imag))
 
                 if self.config.interlaced_calculation:
