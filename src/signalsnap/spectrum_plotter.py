@@ -244,7 +244,10 @@ class SpectrumPlotter:
         norm = colors.TwoSlopeNorm(vmin=-abs_max, vcenter=0, vmax=abs_max)
         # norm = MidpointNormalize(midpoint=0, vmin=vmin, vmax=vmax)
 
-        y, x = np.meshgrid(s_f_plot[order], s_f_plot[order])
+        if s_f_plot[order].min() < 0: # True in case of full_bispectrum
+            x, y = np.meshgrid(s_f_plot[order], s_f_plot[order][s_f_plot[order].shape[0]//2:])
+        else:
+            x, y = np.meshgrid(s_f_plot[order], s_f_plot[order])
         z = s_data_plot[order].copy()
         err_matrix = np.zeros_like(z)
         if s_err_plot[order] is not None or self.spectrum_calculator.S_err[order] is not None:
