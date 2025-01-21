@@ -239,7 +239,7 @@ class SpectrumPlotter:
         if s_f_plot[order].min() < 0: # True in case of full_bispectrum
             x, y = np.meshgrid(s_f_plot[order], s_f_plot[order][s_f_plot[order].shape[0]//2:])
         else:
-            x, y = np.meshgrid(s_f_plot[order], s_f_plot[order])
+            y, x = np.meshgrid(s_f_plot[order], s_f_plot[order])
 
         z = s_data_plot[order].copy()
 
