@@ -83,7 +83,7 @@ class SpectrumConfig:
                  f_unit='Hz', f_max=None, f_min=0, f_lists=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True,
-                 random_phase=False, full_bispectrum=False,
+                 random_phase=False, full_bispectrum=False, sigma_t=0.14,
                  rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
 
         if path is not None and not isinstance(path, str):
@@ -207,3 +207,4 @@ class SpectrumConfig:
         self.show_first_frame = show_first_frame
         self.turbo_mode = turbo_mode
         self.full_bispectrum = full_bispectrum
+        self.sigma_t = sigma_t

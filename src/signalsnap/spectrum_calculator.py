@@ -259,7 +259,7 @@ def calc_window(x, N_window, L, sigma_t):
 
 
 @njit
-def cgw(N_window, fs=None, ones=False):
+def cgw(N_window, fs=None, ones=False, sigma_t=0.14):
     """
     Helper function to calculate the approx. confined gaussian window as defined in https://doi.org/10.1016/j.sigpro.2014.03.033
 
@@ -278,7 +278,6 @@ def cgw(N_window, fs=None, ones=False):
     """
     x = np.linspace(0, N_window, N_window)
     L = N_window + 1
-    sigma_t = 0.14
     window = calc_window(x, N_window, L, sigma_t)
     if ones:
         window = np.ones(N_window)
@@ -330,7 +329,7 @@ def apply_window(window_width, t_clicks, fs, sigma_t=0.14):
     dt_full = window_width / N_window_full
 
     # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
-    window_full, norm = cgw(N_window_full, 1 / dt_full)
+    window_full, norm = cgw(N_window_full, 1 / dt_full, sigma_t=sigma_t)
 
     return window / np.sqrt(norm), window_full
 
@@ -606,7 +605,6 @@ class SpectrumCalculator:
 
     # ==================== End of the new algorith =================================
 
-
     def calc_single_window(self):
         """
         Return a single example of the window function for normalization purposes.
@@ -642,7 +640,7 @@ class SpectrumCalculator:
         dt_full = self.T_window / N_window_full
 
         # window_full, norm = cgw(N_window_full, 1 / dt_full, ones=ones)
-        window_full, norm = cgw(N_window_full, 1 / dt_full)
+        window_full, norm = cgw(N_window_full, 1 / dt_full, sigma_t=self.config.sigma_t)
 
         return window_full, N_window_full
 
@@ -762,8 +760,9 @@ class SpectrumCalculator:
         m = self.config.m
 
         # ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
-        d_1 = af.tile(af.transpose(a_w1), a_w2.shape[0],) # af.matmulNT(ones, a_w1) # copies a_w1 vertically # MAYBE MAYBE FALSCH
-        d_2 = af.tile(a_w2, 1, a_w1.shape[0]) # copies a_w2 horizontally # MAYBE MAYBE FALSCH
+        d_1 = af.tile(af.transpose(a_w1),
+                      a_w2.shape[0], )  # af.matmulNT(ones, a_w1) # copies a_w1 vertically # MAYBE MAYBE FALSCH
+        d_2 = af.tile(a_w2, 1, a_w1.shape[0])  # copies a_w2 horizontally # MAYBE MAYBE FALSCH
         d_3 = a_w3
         # ================ moment ==========================
         if self.config.coherent:
@@ -785,8 +784,8 @@ class SpectrumCalculator:
 
             if self.use_naive_estimator:
                 s3 = (d_123_mean - d_12_mean * d_3_mean -
-                                                     d_13_mean * d_2_mean - d_23_mean * d_1_mean +
-                                                     2 * d_1_mean * d_2_mean * d_3_mean)
+                      d_13_mean * d_2_mean - d_23_mean * d_1_mean +
+                      2 * d_1_mean * d_2_mean * d_3_mean)
 
             else:
                 # Compute c3 estimator using the equation provided
@@ -1505,7 +1504,7 @@ class SpectrumCalculator:
                 # self.S_err[order] /= n_windows // self.config.m_var * np.sqrt(n_windows)
 
                 self.S_err[order] = 1 / self.number_of_error_estimates * (
-                    np.sqrt(self.S_err[order].real) + 1j * np.sqrt(self.S_err[order].imag))
+                        np.sqrt(self.S_err[order].real) + 1j * np.sqrt(self.S_err[order].imag))
 
                 if self.config.interlaced_calculation:
                     self.S_err[order] /= np.sqrt(2)
@@ -1825,7 +1824,7 @@ class SpectrumCalculator:
         self.indi = self.index_generation_to_aw_3(f_max_ind)
         # ==================================================================
 
-        single_window, _ = cgw(int(window_points), self.fs)
+        single_window, _ = cgw(int(window_points), self.fs, sigma_t=self.config.sigma_t)
         window = to_gpu(np.array(m * [single_window]).flatten().reshape((window_points, 1, m), order='F'))
 
         self.__prep_f_and_S_arrays(orders, freq_all_freq[f_min_ind:f_max_ind])
@@ -2094,7 +2093,7 @@ class SpectrumCalculator:
                             t_clicks_windowed, single_window = apply_window(self.T_window,
                                                                             t_clicks_minus_start,
                                                                             1 / self.config.delta_t,
-                                                                            sigma_t=sigma_t)
+                                                                            sigma_t=self.config.sigma_t)
 
                         # ------ GPU --------
                         t_clicks_minus_start_gpu = to_gpu(t_clicks_minus_start)
