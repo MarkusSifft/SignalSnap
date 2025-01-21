@@ -90,7 +90,8 @@ class SpectrumConfig:
     """
     
     ALLOWED_COMBINATION3 = {'2_122': '1, 2, 2',
-                            '2_112': '1, 1, 2'}
+                            '2_112': '1, 1, 2',
+                            '2_212': '2, 1, 2'}
 
     ALLOWED_COMBINATION4 = {'4_1234': '1, 2, 3, 4',
                             '4_1324': '1, 3, 2, 4',
@@ -109,7 +110,7 @@ class SpectrumConfig:
                  f_unit='Hz', f_max=None, f_min=0, f_lists=None, backend='cpu', spectrum_size=100, order_in='all',
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True,
-                 random_phase=False,
+                 random_phase=False, full_bispectrum=False,
                  rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False,
                  combination3=None, combination4=None, path3=None, group_key3=None, dataset3=None, data3=None,
                  data4=None, path4=None, group_key4=None, dataset4=None):
@@ -240,6 +241,7 @@ class SpectrumConfig:
         self.full_import = full_import
         self.show_first_frame = show_first_frame
         self.turbo_mode = turbo_mode
+        self.full_bispectrum = full_bispectrum
 
         self.combination3 = combination3
         self.combination4 = combination4
@@ -253,3 +255,7 @@ class SpectrumConfig:
         self.group_key4 = group_key4
         self.dataset4 = dataset4
         self.data4 = data4
+
+
+
+
