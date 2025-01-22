@@ -1308,7 +1308,7 @@ class SpectrumCalculator:
             elif order == 3:
 
                 a_w1 = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind // 2))), dim=0)
-                print(a_w1)
+
                 a_w2 = a_w1
 
                 # a_w3 = to_gpu(calc_a_w3(a_w_all_gpu.to_ndarray(), f_max_ind, self.config.m))
@@ -1325,8 +1325,9 @@ class SpectrumCalculator:
                     t0 = np.concatenate((t0, np.conj(t0[:0:-1])))
 
                 t1 = self.calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
-                print(t1)
+
                 a_w3 = to_gpu(t1)
+                print(t1)
                 # ===================================================
 
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
