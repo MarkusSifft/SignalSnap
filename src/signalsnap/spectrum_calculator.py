@@ -759,10 +759,14 @@ class SpectrumCalculator:
 
         m = self.config.m
 
-        # ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
-        d_1 = af.tile(af.transpose(a_w1),
-                      a_w2.shape[0], )  # af.matmulNT(ones, a_w1) # copies a_w1 vertically
-        d_2 = af.tile(a_w2, 1, a_w1.shape[0])  # copies a_w2 horizontally
+        if self.config.full_bispectrum:
+            d_1 = af.tile(af.transpose(a_w1), a_w2.shape[0], )  # af.matmulNT(ones, a_w1) # copies a_w1 vertically
+            d_2 = af.tile(a_w2, 1, a_w1.shape[0])  # af.matmulNT(a_w2, ones) # copies a_w2 horizontally
+        else:
+            ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
+            d_1 = af.matmulNT(ones, a_w1) # copies a_w1 vertically
+            d_2 = af.matmulNT(a_w2, ones) # copies a_w2 horizontally
+
         d_3 = a_w3
         # ================ moment ==========================
         if self.config.coherent:
@@ -1327,11 +1331,9 @@ class SpectrumCalculator:
                 t1 = self.calc_a_w3(t0, f_max_ind, self.config.m, self.a_w3_init, self.indi, self.config.backend)
 
                 a_w3 = to_gpu(t1)
-                print(t1)
                 # ===================================================
 
                 single_spectrum = self.c3(a_w1, a_w2, a_w3) / (self.config.delta_t * (single_window ** order).sum())
-                print(single_spectrum)
 
             else:  # order 4
 
