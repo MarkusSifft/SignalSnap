@@ -121,6 +121,129 @@ def average_spectra(all_spectra):
     return spec0
 
 
+def reduce_2d(x, y, err, index_middle, index_left, index_right):
+    max_index = y.shape[0]  # Assuming y and err are square matrices of shape (M, M)
+
+    # print('max_index:', max_index)
+
+    # Truncate index arrays if they exceed the size of y and err
+    index_left = np.array(index_left)
+    index_right = np.array(index_right)
+    index_middle = np.array(index_middle)
+
+    index_left = index_left[index_left < max_index]
+    index_left = index_left[:-1]
+    index_right = index_right[index_right < max_index]
+    index_middle = index_middle[index_middle < max_index]
+
+    if index_middle.shape[0] > index_right.shape[0]:
+        index_middle = index_middle[:-1]
+
+    # Adjust N based on the truncated indices
+    N = len(index_left)
+
+    x_new = x[index_middle]
+
+    y_new = 1j * np.zeros((N, N))
+    err_new = 1j * np.zeros((N, N))
+
+    for i in range(N):
+        for j in range(N):
+            i_left, i_right = index_left[i], index_right[i]
+            j_left, j_right = index_left[j], index_right[j]
+
+            # Ensure indices are within the bounds
+            if i_left >= i_right or j_left >= j_right:
+                y_new[i, j] = 0
+                err_new[i, j] = 0
+                continue
+
+            y_block = y[i_left:i_right, j_left:j_right]
+            y_new[i, j] = np.mean(y_block) if y_block.size > 0 else 0
+
+            err_block = err[i_left:i_right, j_left:j_right]
+            n_elements = y_block.size
+
+            if n_elements > 0:
+                err_new[i, j] = (np.sqrt(np.sum(err_block ** 2)) / n_elements) ** 2
+
+                if n_elements > 1:
+                    err_new[i, j] += np.var(y_block, ddof=1) / n_elements
+
+                err_new[i, j] = (err_new[i, j]) ** 0.5
+
+            else:
+                err_new[i, j] = 0
+
+    return x_new, y_new, err_new
+
+
+def reduce_points(x, y, err, N):
+    # Step 1: Calculate cumulative arc length
+    dx = np.diff(x)
+    dy = np.diff(y)
+    distances = np.sqrt(dx ** 2 + dy ** 2)
+    distances = np.concatenate(([0], distances))
+    # distances = np.where(distances > 2*err, distances, 0)
+    cumulative_length = np.concatenate(([0], np.cumsum(distances)))
+
+    # Step 2: Define equidistant intervals
+    num_points = N  # Number of points to resample
+    new_lengths = np.linspace(0, cumulative_length[-1], num_points)
+    delta_length = new_lengths[1]
+
+    old_index = 0
+    all_index = []
+
+    for i in range(len(x)):
+
+        if cumulative_length[i] - cumulative_length[old_index] > delta_length:
+            all_index.append(i)
+            old_index = i
+
+    all_index.append(len(x))
+
+    all_index_right_side = all_index
+    all_index_left_side = [0] + all_index[:-1]
+
+    all_index_middle = [(i + j) // 2 for i, j in zip(all_index_left_side, all_index_right_side)]
+
+    x_new = x[all_index_middle]
+
+    y_nex = np.array([np.mean(y[i:j]) for i, j in zip(all_index_left_side, all_index_right_side)])
+
+    err_new = (
+                      (np.array([np.sqrt(np.sum(err[i:j] ** 2)) / (j - i) if j > i else 0
+                                 for i, j in zip(all_index_left_side, all_index_right_side)])) ** 2
+                      + np.array([np.var(y[i:j], ddof=1) / (j - i) if j > i and np.abs(j - i) >= 2 else 0 for i, j in
+                                  zip(all_index_left_side, all_index_right_side)])) ** 0.5
+
+    return x_new, y_nex, err_new, all_index_middle, all_index_left_side, all_index_right_side
+
+
+def addaptive_downsampling(high_res_spec, N):
+    f_2_new, s_2_new, s_2_err_new, all_index_middle, all_index_left_side, all_index_right_side = reduce_points(
+        high_res_spec.freq[2], high_res_spec.S[2], high_res_spec.S_err[2], N)
+    f_3_new, s_3_new, s_3_err_new = reduce_2d(high_res_spec.freq[3], high_res_spec.S[3], high_res_spec.S_err[3],
+                                              all_index_middle, all_index_left_side, all_index_right_side)
+    f_4_new, s_4_new, s_4_err_new = reduce_2d(high_res_spec.freq[4], high_res_spec.S[4], high_res_spec.S_err[4],
+                                              all_index_middle, all_index_left_side, all_index_right_side)
+
+    high_res_spec.freq[2] = f_2_new
+    high_res_spec.freq[3] = f_3_new
+    high_res_spec.freq[4] = f_4_new
+
+    high_res_spec.S[2] = s_2_new
+    high_res_spec.S[3] = s_3_new
+    high_res_spec.S[4] = s_4_new
+
+    high_res_spec.S_err[2] = s_2_err_new
+    high_res_spec.S_err[3] = s_3_err_new
+    high_res_spec.S_err[4] = s_4_err_new
+
+    return high_res_spec
+
+
 def pickle_save(path, obj):
     """
     Helper function to pickle system objects
