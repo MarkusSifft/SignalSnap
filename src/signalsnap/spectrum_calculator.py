@@ -34,6 +34,93 @@ class MissingValueError(Exception):
     pass
 
 
+def average_spectra(all_spectra):
+    """
+    Compute the average spectrum and its associated error from a list of spectra.
+
+    Each spectrum is assumed to be an object with attributes:
+      - S : array-like
+          The spectrum data.
+      - S_err : array-like of complex
+          The measurement errors for each data point, where the real and imaginary
+          parts represent the errors of the corresponding parts of S.
+
+    The averaging is performed only on indices 1 to 4 (inclusive of 1 and exclusive of 5)
+    of the spectrum arrays. For these indices, the function computes:
+      - The mean spectrum value by summing S over all spectra and dividing by the number
+        of spectra.
+      - The associated error is computed by summing the squares of the individual errors,
+        dividing by N**2 (where N is the number of spectra), and then taking the square root
+        separately for the real and imaginary parts. The final error is stored as a complex
+        number (real part for the error in the real component and imaginary part for the
+        error in the imaginary component).
+
+    Parameters
+    ----------
+    all_spectra : list
+        A list of spectrum objects. Each object must have attributes ``S`` and ``S_err``
+        (both array-like) as described above.
+
+    Returns
+    -------
+    s_avg : numpy.ndarray
+        The averaged spectrum. For indices 1 to 4, the values are the mean of the
+        corresponding entries from all spectra. Other indices (if any) remain unaltered.
+    serr_avg : numpy.ndarray
+        The computed error for the averaged spectrum. For indices 1 to 4, each entry is a
+        complex number where the real part is the error in the real component and the
+        imaginary part is the error in the imaginary component. Other indices (if any)
+        remain unaltered.
+    """
+
+    # Use the first spectrum as the placeholder
+    spec0 = all_spectra[0]
+
+    # Make copies of the spectrum to avoid modifying the original data.
+    s_avg = spec0.S.copy()
+    serr_avg_real = s_avg.copy()
+    serr_avg_imag = s_avg.copy()
+
+    # ---- Initialize using the first spectrum’s errors (squared) for indices 1 to 4.
+    for i in range(1, 5):
+        serr_avg_real[i] = (spec0.S_err[i].real) ** 2
+        serr_avg_imag[i] = (spec0.S_err[i].imag) ** 2
+
+    # ---- Sum S and the squared errors from the remaining spectra for indices 1 to 4.
+    for spec in all_spectra[1:]:
+        for i in range(1, 5):
+            s_avg[i] += spec.S[i]
+            serr_avg_real[i] += (spec.S_err[i].real) ** 2
+            serr_avg_imag[i] += (spec.S_err[i].imag) ** 2
+
+    # Number of spectra
+    N = len(all_spectra)
+
+    # Allocate array for final error output (copy shape from s_avg).
+    serr_avg = s_avg.copy()
+
+    # ---- Calculate the mean spectrum and its error for indices 1 to 4.
+    for i in range(1, 5):
+        # Compute the mean spectrum value.
+        s_avg[i] /= N
+
+        # Compute the variance from measurement errors (real and imaginary parts).
+        variance_from_errors_real = serr_avg_real[i] / N ** 2
+        variance_from_errors_imag = serr_avg_imag[i] / N ** 2
+
+        # Compute the standard error by taking the square root of the variance.
+        err_real = np.sqrt(variance_from_errors_real)
+        err_imag = np.sqrt(variance_from_errors_imag)
+
+        # Combine the errors into a complex number.
+        serr_avg[i] = err_real + 1j * err_imag
+
+    spec0.S = s_avg
+    spec0.S_err = serr_avg
+
+    return spec0
+
+
 def pickle_save(path, obj):
     """
     Helper function to pickle system objects
@@ -764,8 +851,8 @@ class SpectrumCalculator:
             d_2 = af.tile(a_w2, 1, a_w1.shape[0])  # af.matmulNT(a_w2, ones) # copies a_w2 horizontally
         else:
             ones = to_gpu(np.ones_like(a_w1.to_ndarray()))
-            d_1 = af.matmulNT(ones, a_w1) # copies a_w1 vertically
-            d_2 = af.matmulNT(a_w2, ones) # copies a_w2 horizontally
+            d_1 = af.matmulNT(ones, a_w1)  # copies a_w1 vertically
+            d_2 = af.matmulNT(a_w2, ones)  # copies a_w2 horizontally
 
         d_3 = a_w3
         # ================ moment ==========================
