@@ -84,7 +84,7 @@ class SpectrumConfig:
                  corr_shift=0, filter_func=False, verbose=True, coherent=False, corr_default=None,
                  break_after=1e6, m=10, m_var=10, m_stationarity=None, interlaced_calculation=True,
                  random_phase=False, full_bispectrum=False, sigma_t=0.14,
-                 rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False):
+                 rect_win=False, full_import=True, show_first_frame=True, turbo_mode=False, use_hosa_estimator=False):
 
         if path is not None and not isinstance(path, str):
             raise ValueError("path must be a string or None.")
@@ -208,3 +208,4 @@ class SpectrumConfig:
         self.turbo_mode = turbo_mode
         self.full_bispectrum = full_bispectrum
         self.sigma_t = sigma_t
+        self.use_hosa_estimator = use_hosa_estimator

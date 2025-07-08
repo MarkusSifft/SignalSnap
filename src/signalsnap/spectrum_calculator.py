@@ -1068,6 +1068,10 @@ class SpectrumCalculator:
             if self.use_naive_estimator:
                 s4 = xyzw_mean - (xy_zw_mean + xz_yw_mean + xw_yz_mean)
 
+            elif self.config.use_hosa_estimator:
+                print('Be sure that the signal has a zero mean!')
+                s4 = xyzw_mean
+
             else:
                 s4 = m ** 2 / ((m - 1) * (m - 2) * (m - 3)) * (
                         (m + 1) * xyzw_mean -
@@ -1508,6 +1512,7 @@ class SpectrumCalculator:
                     a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                 else:
                     a_w = a_w_all_gpu
+
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=self.config.delta_t)
@@ -2071,8 +2076,8 @@ class SpectrumCalculator:
                     chunk_corr = np.random.randn(window_points, 1, m)
                     chunk_corr_gpu = to_gpu(chunk_corr)
                 elif self.config.corr_data is not None:
-                    chunk_corr = self.config.corr_data[int(i * (window_points * m) + self.config.corr_shift): int(
-                        (i + 1) * (window_points * m) + self.config.corr_shift)]
+                    chunk_corr = self.config.corr_data[int(i * (window_points * m) + window_shift + self.config.corr_shift): int(
+                        (i + 1) * (window_points * m) + window_shift + self.config.corr_shift)]
                     chunk_corr_gpu = to_gpu(chunk_corr.reshape((window_points, 1, m), order='F'))
                 else:
                     chunk_corr_gpu = None
