@@ -1006,7 +1006,7 @@ class SpectrumCalculator:
                 s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
                                                      d_13_mean * d_2_mean - d_23_mean * d_1_mean +
                                                      2 * d_1_mean * d_2_mean * d_3_mean)
-        return s3
+        return s3.conj()
 
     # ==================== new compact algorithm for c4 =================================
     def c4(self, a_w, a_w_corr):
@@ -1512,7 +1512,6 @@ class SpectrumCalculator:
                     a_w = af.lookup(a_w_all_gpu, af.Array(list(range(f_min_ind, f_max_ind))), dim=0)
                 else:
                     a_w = a_w_all_gpu
-
 
                 if self.config.corr_data is not None:
                     a_w_all_corr = fft_r2c(window * chunk_corr_gpu, dim0=0, scale=self.config.delta_t)
