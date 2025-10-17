@@ -1006,6 +1006,7 @@ class SpectrumCalculator:
                 s3 = m ** 2 / ((m - 1) * (m - 2)) * (d_123_mean - d_12_mean * d_3_mean -
                                                      d_13_mean * d_2_mean - d_23_mean * d_1_mean +
                                                      2 * d_1_mean * d_2_mean * d_3_mean)
+        print(type(s3))
         return s3.conj()
 
     # ==================== new compact algorithm for c4 =================================
